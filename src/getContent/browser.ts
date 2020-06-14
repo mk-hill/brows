@@ -41,7 +41,7 @@ export async function getContentsFromBrowser({ url, selector, contentType, verbo
   return page.$eval(selector, (element, contentType) => element[contentType] ?? '', contentType);
 }
 
-export async function launchBrowser(verbose = false) {
+export async function launchBrowser(verbose = false): Promise<void> {
   const { stdout } = printIf(verbose);
   stdout('Launching browser');
   browserPromise = puppeteer
@@ -55,4 +55,4 @@ export async function launchBrowser(verbose = false) {
     });
 }
 
-export const closeBrowser = async () => browserPromise?.then((browser) => browser.close());
+export const closeBrowser = async (): Promise<void> => browserPromise?.then((browser) => browser.close());

@@ -21,13 +21,13 @@ export interface BrowsOptions {
 
 export const dataDir = `${path.resolve(__dirname, 'data')}`;
 
-const saveOptions = (name: string, content: BrowsOptions) =>
+const saveOptions = (name: string, content: BrowsOptions): Promise<void> =>
   promisify(writeFile)(`${dataDir}/${name}.json`, JSON.stringify(content), 'utf8');
 
-export const readOptions = (name: string) =>
+export const readOptions = (name: string): Promise<BrowsOptions> =>
   promisify(readFile)(`${dataDir}/${name}.json`, 'utf8').then((contents) => JSON.parse(contents) as BrowsOptions);
 
-export const updateSavedOptions = (name: string, updates: Partial<BrowsOptions>) =>
+export const updateSavedOptions = (name: string, updates: Partial<BrowsOptions>): Promise<void> =>
   readOptions(name).then((savedOptions) => saveOptions(name, { ...savedOptions, ...updates }));
 
 export async function buildOptions({ input, flags }: CLI): Promise<BrowsOptions[]> {

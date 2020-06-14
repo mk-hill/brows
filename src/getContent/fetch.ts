@@ -34,7 +34,9 @@ export async function fetchContents({ url, selector, contentType, verbose, name 
   if (!element) {
     throw new ElementNotFoundError(url, selector);
   } else {
-    stdout(name ? `Found ${highlight(name)} in fetched content` : `Found ${highlight(selector)} in fetched ${highlight(url)} content`);
+    stdout(
+      name ? `Found ${highlight(name)} in fetched content` : `Found ${highlight(selector)} in fetched ${highlight(url)} content`
+    );
   }
 
   return element[contentType] ?? '';
