@@ -1,0 +1,43 @@
+{
+  "name": "brows",
+  "version": "0.0.1",
+  "main": "index.js",
+  "bin": {
+    "brows": "./bin/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "ts-jest"
+    },
+    "testRegex": "test/test.ts",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "globalTeardown": "/home/mike/dev/brows/test/teardown.ts"
+  },
+  "keywords": [],
+  "author": "Michael Hill <mike@mkh.dev>",
+  "license": "MIT",
+  "dependencies": {
+    "jsdom": "^16.2.2",
+    "meow": "^7.0.1",
+    "node-fetch": "^2.6.0",
+    "puppeteer": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.0",
+    "@types/jsdom": "^16.2.3",
+    "@types/meow": "^5.0.0",
+    "@types/node-fetch": "^2.5.7",
+    "@types/puppeteer": "^3.0.0",
+    "@types/typescript": "^2.0.0",
+    "jest": "^26.0.1",
+    "ts-jest": "^26.1.0",
+    "typescript": "^3.9.5"
+  }
+}

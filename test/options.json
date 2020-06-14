@@ -1,0 +1,70 @@
+{
+  "noInput": {
+    "input": []
+  },
+  "noSelector": {
+    "input": ["google.com"]
+  },
+  "fetchText": {
+    "input": ["http://info.cern.ch/hypertext/WWW/TheProject.html", "h1"]
+  },
+  "fetchHtml": {
+    "input": ["http://info.cern.ch/hypertext/WWW/TheProject.html", "h1"],
+    "flags": {
+      "html": true
+    }
+  },
+  "formatUrl": {
+    "input": ["info.cern.ch/hypertext/WWW/TheProject.html", "h1"]
+  },
+  "saveFetch": {
+    "input": ["http://info.cern.ch/hypertext/WWW/TheProject.html", "h1"],
+    "flags": {
+      "save": "www"
+    }
+  },
+  "savedFetch": {
+    "input": ["www"]
+  },
+  "saveFetchHtml": {
+    "input": ["http://info.cern.ch/hypertext/WWW/TheProject.html", "h1"],
+    "flags": {
+      "save": "wwwHtml",
+      "html": true
+    }
+  },
+  "savedFetchHtml": {
+    "input": ["wwwHtml"]
+  },
+  "spaText": {
+    "input": ["http://todomvc.com/examples/react/", "h1"]
+  },
+  "spaHtml": {
+    "input": ["http://todomvc.com/examples/react/", "h1"],
+    "flags": {
+      "html": true
+    }
+  },
+  "saveSpa": {
+    "input": ["http://todomvc.com/examples/react/", "h1"],
+    "flags": {
+      "save": "todo"
+    }
+  },
+  "savedSpa": {
+    "input": ["todo"]
+  },
+  "saveSpaHtml": {
+    "input": ["http://todomvc.com/examples/react/", "h1"],
+    "flags": {
+      "save": "todoHtml",
+      "html": true
+    }
+  },
+  "savedSpaHtml": {
+    "input": ["todoHtml"]
+  },
+  "multipleSaved": {
+    "input": ["www", "todo"]
+  }
+}
