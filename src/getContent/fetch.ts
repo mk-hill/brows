@@ -5,14 +5,14 @@ import { BrowsOptions } from '../options';
 import { printIf, highlight } from '../util';
 import { ElementNotFoundError } from './ElementNotFoundError';
 
-const pageContents: Record<string, Promise<string>> = {};
+const documents: Record<string, Promise<Document>> = {};
 
 export async function fetchContents({ url, selector, contentType, verbose, name }: BrowsOptions): Promise<string> {
   const { stdout } = printIf(verbose);
 
-  if (!pageContents[url]) {
+  if (!documents[url]) {
     stdout(`Fetching ${highlight(url)} content`);
-    pageContents[url] = fetch(url)
+    documents[url] = fetch(url)
       .catch((e) => {
         throw new Error(`Unable to fetch HTML content: ${e.message}`);
       })
@@ -22,14 +22,14 @@ export async function fetchContents({ url, selector, contentType, verbose, name 
         }
         stdout(`Fetched ${highlight(url)} content`);
         return res.text();
-      });
+      })
+      .then((html) => new JSDOM(html).window.document);
   } else {
     stdout(`Using previous ${highlight(url)} fetch for ${highlight(name || selector)}`);
   }
 
-  const html = await pageContents[url];
-  const { window } = new JSDOM(html);
-  const element = window.document.querySelector(selector);
+  const document = await documents[url];
+  const element = document.querySelector(selector);
 
   if (!element) {
     throw new ElementNotFoundError(url, selector);

@@ -1,7 +1,7 @@
 {
   "name": "brows",
   "description": "An easy to use CLI for scraping any website using CSS selectors",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "bin": {
     "brows": "lib/cli.js"
   },
