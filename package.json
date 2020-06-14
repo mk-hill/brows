@@ -64,7 +64,7 @@
       "ts",
       "js"
     ],
-    "globalTeardown": "/home/mike/dev/brows/test/teardown.ts"
+    "globalTeardown": "<rootDir>/test/teardown.ts"
   },
   "husky": {
     "hooks": {
