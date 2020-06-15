@@ -29,6 +29,7 @@ export async function getContentsFromBrowser({ url, selector, contentType, verbo
 
   const page = await pages[url];
 
+  stdout(`Waiting for ${highlight(name || selector)} in page`);
   await page.waitForSelector(selector).catch((e) => {
     if (e instanceof TimeoutError) {
       throw new ElementNotFoundError(url, selector);
@@ -36,7 +37,7 @@ export async function getContentsFromBrowser({ url, selector, contentType, verbo
     throw new Error(`Unable wait for selector "${selector}": ${e.message}`);
   });
 
-  stdout(name ? `Found ${highlight(name)} in browser` : `Found ${highlight(selector)} in ${highlight(url)} using browser`);
+  stdout(name ? `Found ${highlight(name)} in browser page` : `Found ${highlight(selector)} in ${highlight(url)} using browser`);
 
   return page.$eval(selector, (element, contentType) => element[contentType] ?? '', contentType);
 }

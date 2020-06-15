@@ -16,7 +16,8 @@ const cli = meow(
     
     Options
       -s, --save <name>     Save input for future use with given name
-                            multiple saved names can be used at a time
+                            multiple saved names can be used at a time  
+      -l, --list-saved      List saved options
       -v, --verbose         Print additional details about what is being done
                             not saved, determined separately for each run
       -h, --html            Return element's outer HTML instead of its text content
@@ -24,6 +25,7 @@ const cli = meow(
       -f, --force-browser   Prevent initial fetch attempt and force browser launch 
                             will be updated automatically on saved options if
                             fetch attempt fails, can also be saved manually
+      --save-only <name>    Save input and exit without retrieving content   
 
     By default, will initially attempt to retrieve content from fetched HTML
     If this fails, a headless browser will be used instead
@@ -37,6 +39,11 @@ const cli = meow(
       save: {
         type: 'string',
         alias: 's',
+      },
+      listSaved: {
+        type: 'boolean',
+        alias: 'l',
+        default: false,
       },
       verbose: {
         type: 'boolean',
@@ -53,13 +60,16 @@ const cli = meow(
         alias: 'f',
         default: false,
       },
+      saveOnly: {
+        type: 'string',
+      },
     },
   }
 );
 
 brows(cli)
   .then((results) => {
-    console.log(results);
+    if (results) console.log(results);
     closeBrowser();
   })
   .catch((e) => {

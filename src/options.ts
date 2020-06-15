@@ -30,23 +30,47 @@ export const readOptions = (name: string): Promise<BrowsOptions> =>
 export const updateSavedOptions = (name: string, updates: Partial<BrowsOptions>): Promise<void> =>
   readOptions(name).then((savedOptions) => saveOptions(name, { ...savedOptions, ...updates }));
 
-export async function buildOptions({ input, flags }: CLI): Promise<BrowsOptions[]> {
-  if (!input.length) {
-    throw new Error('Missing input');
-  }
+async function printOptions(allOptions: BrowsOptions[]) {
+  if (!allOptions.length) return;
+  const formattedOptions = allOptions.map(({ name, ...options }) => {
+    const titleLine = name ? `${highlight(name)}:` : '';
 
+    const contents = Object.entries(options)
+      .map(([key, value]) => `  ${highlight(key)}: ${value}`)
+      .join('\n');
+
+    return `${titleLine}\n${contents}`;
+  });
+  console.log(formattedOptions.join('\n'));
+}
+
+export async function buildOptions({ input, flags }: CLI): Promise<BrowsOptions[]> {
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir);
   }
 
-  const { html, save, forceBrowser, verbose } = flags;
-  const contentType = html ? ContentType.OUTER_HTML : ContentType.TEXT_CONTENT;
-
-  const { stdout } = printIf(verbose);
-
   const savedNames = readdirSync(dataDir)
     .filter((fileName) => fileName?.endsWith('.json'))
     .map((fileName) => fileName.slice(0, -5));
+
+  if (flags.listSaved) {
+    const listPromise = Promise.all(savedNames.map(async (name) => ({ name, ...(await readOptions(name)) }))).then(printOptions);
+    // Allow listSaved call with no input
+    if (!input.length) {
+      await listPromise;
+      return [];
+    }
+  }
+
+  if (!input.length) {
+    throw new Error('No input');
+  }
+
+  const { html, save, forceBrowser, verbose, saveOnly } = flags;
+
+  const contentType = html ? ContentType.OUTER_HTML : ContentType.TEXT_CONTENT;
+
+  const { stdout } = printIf(verbose);
 
   if (input.every((str) => savedNames.includes(str))) {
     stdout(`Loading saved options for: ${input.map(highlight).join(', ')}`);
@@ -60,9 +84,16 @@ export async function buildOptions({ input, flags }: CLI): Promise<BrowsOptions[
     throw new Error('URL and selector required');
   }
 
-  if (save) {
-    saveOptions(save, { url, selector, contentType, forceBrowser }).then(() => stdout(`Saved ${highlight(save)} options`));
+  const name = save || saveOnly;
+  if (name) {
+    const savePromise = saveOptions(name, { url, selector, contentType, forceBrowser }).then(() =>
+      stdout(`Saved ${highlight(name)} options`)
+    );
+    if (saveOnly) {
+      await savePromise;
+      return [];
+    }
   }
 
-  return [{ url, selector, contentType, name: save, ...flags }];
+  return [{ url, selector, contentType, name, ...flags }];
 }
