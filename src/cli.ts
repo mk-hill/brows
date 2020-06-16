@@ -9,23 +9,23 @@ import { highlight } from './util';
 const cli = meow(
   `
     Usage
-      $ brows <url> <selector>
-      $ brows <url> <selector> -s <name>
-      $ brows <name>
-      $ brows <name> <name> ...
+      $ brows [options] <url> <selector> 
+      $ brows [options] <name> [<name> ...] 
     
     Options
       -s, --save <name>     Save input for future use with given name
-                            multiple saved names can be used at a time  
-      -l, --list-saved      List saved options
-      -v, --verbose         Print additional details about what is being done
-                            not saved, determined separately for each run
-      -h, --html            Return element's outer HTML instead of its text content
+                            multiple saved names can be used at a time,
+                            and grouped under a different name
+      --save-only <name>    Save input and exit without retrieving content   
+      -l, --list-saved      List saved options in alphabetical order
+                            can be used without input to only list and exit
+      -h, --html            Retrieve outer HTML instead of text content
                             content type will be saved if save option is used
-      -f, --force-browser   Prevent initial fetch attempt and force browser launch 
+      -f, --force-browser   Prevent fetch attempt and force browser launch 
                             will be updated automatically on saved options if
                             fetch attempt fails, can also be saved manually
-      --save-only <name>    Save input and exit without retrieving content   
+      -v, --verbose         Print additional details about what is being done
+                            not saved, determined separately for each run
 
     By default, will initially attempt to retrieve content from fetched HTML
     If this fails, a headless browser will be used instead
@@ -34,20 +34,18 @@ const cli = meow(
     reused if multiple saved names which target the same URL are passed 
 `,
   {
-    description: 'Retrieve contents of the first HTML element matching a CSS selector in a URL',
+    description: 'Retrieve contents of the first HTML element matching CSS selector in URL',
     flags: {
       save: {
         type: 'string',
         alias: 's',
       },
+      saveOnly: {
+        type: 'string',
+      },
       listSaved: {
         type: 'boolean',
         alias: 'l',
-        default: false,
-      },
-      verbose: {
-        type: 'boolean',
-        alias: 'v',
         default: false,
       },
       html: {
@@ -60,8 +58,10 @@ const cli = meow(
         alias: 'f',
         default: false,
       },
-      saveOnly: {
-        type: 'string',
+      verbose: {
+        type: 'boolean',
+        alias: 'v',
+        default: false,
       },
     },
   }

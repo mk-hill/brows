@@ -66,5 +66,53 @@
   },
   "multipleSaved": {
     "input": ["www", "todo"]
+  },
+  "saveParentText": {
+    "input": ["www", "todo"],
+    "flags": {
+      "saveOnly": "parentText"
+    }
+  },
+  "savedParentText": {
+    "input": ["parentText"]
+  },
+  "saveParentHtml": {
+    "input": ["wwwHtml", "todoHtml"],
+    "flags": {
+      "saveOnly": "parentHtml"
+    }
+  },
+  "savedParentHtml": {
+    "input": ["parentHtml"]
+  },
+  "saveParentWww": {
+    "input": ["www", "wwwHtml"],
+    "flags": {
+      "saveOnly": "parentWww"
+    }
+  },
+  "savedParentWww": {
+    "input": ["parentWww"]
+  },
+  "saveCombinedParents": {
+    "input": ["parentText", "parentHtml"],
+    "flags": {
+      "saveOnly": "combinedParents"
+    }
+  },
+  "savedCombinedParents": {
+    "input": ["combinedParents"]
+  },
+  "saveOverlappingParents": {
+    "input": ["combinedParents", "parentWww"],
+    "flags": {
+      "saveOnly": "overlappingParents"
+    }
+  },
+  "savedOverlappingParents": {
+    "input": ["overlappingParents"]
+  },
+  "getOverlappingParents": {
+    "input": ["combinedParents", "parentWww"]
   }
 }
