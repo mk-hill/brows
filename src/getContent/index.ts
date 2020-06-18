@@ -1,19 +1,21 @@
 import { fetchContents } from './fetch';
 import { getContentsFromBrowser } from './browser';
-import { BrowsOptions, updateSavedOptions } from '../targets';
+import { Target, updateSavedTarget } from '../targets';
 import { ElementNotFoundError } from './ElementNotFoundError';
 import { highlight, printIf } from '../util';
+import { RunOptions } from '../options';
 
 export { launchBrowser, closeBrowser } from './browser';
 
-export async function getContent({ forceBrowser, ...options }: BrowsOptions): Promise<string> {
-  const { verbose, name, url } = options;
-  const { stdout, stderr } = printIf(verbose);
+export async function getContent(target: Target, options: Readonly<RunOptions>): Promise<string> {
+  const { name, url, forceBrowser } = target;
+  const { stdout, stderr } = printIf(options.verbose);
+
   const title = highlight(name || url);
 
   if (!forceBrowser) {
     try {
-      return await fetchContents(options);
+      return await fetchContents(target, options);
     } catch (error) {
       const message =
         error instanceof ElementNotFoundError
@@ -22,8 +24,8 @@ export async function getContent({ forceBrowser, ...options }: BrowsOptions): Pr
       stderr(`${message} ${title} content, using browser`);
 
       if (name && !forceBrowser) {
-        updateSavedOptions(name, { forceBrowser: true }).then(() =>
-          stdout(`Updated saved ${highlight(name)} options to skip fetch attempt in the future`)
+        updateSavedTarget(name, { forceBrowser: true }).then(() =>
+          stdout(`Updated saved ${highlight(name)} target to skip fetch attempt in the future`)
         );
       }
     }
@@ -32,5 +34,5 @@ export async function getContent({ forceBrowser, ...options }: BrowsOptions): Pr
   }
 
   stdout(`Retrieving ${title} content from browser`);
-  return getContentsFromBrowser(options);
+  return getContentsFromBrowser(target, options);
 }

@@ -1,20 +1,23 @@
 import * as defaults from './defaults';
 import { getContent, launchBrowser } from './getContent';
-import { buildOptions as buildTargets } from './targets';
-import { splitOptions, Options } from './options';
+import { extractOptions, Options } from './options';
+import { buildTargets } from './targets';
 
 export { launchBrowser, closeBrowser } from './getContent';
 
-export type Result<T extends string> = Record<T | typeof defaults['targetName'], string>;
+export type Input = (string | Partial<Options>)[];
+export type Result = Record<string, string>;
 
 /**
  * Retrieve content from target(s)
- * @param input array containing either one url followed by one selector, or any number of saved target names
- * @param options optional options object
- * @returns promise which resolves to an object with names (or 'content' for anonymous targets) as keys and results as values
+ * @param input Any number of strings optionally followed by an options object.
+ * Strings can consist of either one url followed by one selector, or any number of saved target names.
+ * @param options Optional options object.
+ * @returns Promise which resolves to an object with each individual target's name (or 'content' for anonymous targets)
+ * mapped to its result. Parent names will not be included in the result.
  */
-export default async function brows<T extends string>(input: T[], options: Partial<Options> = {}): Promise<Result<T>> {
-  const [runOptions, targetOptions] = splitOptions({ ...defaults.options, ...options });
+export default async function brows(...args: Input): Promise<Result> {
+  const [input, targetOptions, runOptions] = extractOptions(args);
 
   const targets = await buildTargets(input, targetOptions, runOptions);
 
@@ -26,9 +29,9 @@ export default async function brows<T extends string>(input: T[], options: Parti
   const results = await Promise.all(
     targets.map(async (target) => ({
       name: target.name,
-      content: await getContent(target),
+      content: await getContent(target, runOptions),
     }))
   );
 
-  return results.reduce((result, { name, content }) => ({ ...result, [name || defaults.targetName]: content }), {} as Result<T>);
+  return results.reduce((result, { name, content }) => ({ ...result, [name || defaults.targetName]: content }), {});
 }

@@ -1,13 +1,15 @@
 import fetch from 'node-fetch';
 import { JSDOM } from 'jsdom';
 
-import { BrowsOptions } from '../targets';
+import { Target } from '../targets';
 import { printIf, highlight } from '../util';
 import { ElementNotFoundError } from './ElementNotFoundError';
+import { RunOptions } from '../options';
 
 const documents: Record<string, Promise<Document>> = {};
 
-export async function fetchContents({ url, selector, contentType, verbose, name }: BrowsOptions): Promise<string> {
+export async function fetchContents(target: Readonly<Target>, { verbose }: Readonly<RunOptions>): Promise<string> {
+  const { url, selector, contentType, name } = target;
   const { stdout } = printIf(verbose);
 
   if (!documents[url]) {

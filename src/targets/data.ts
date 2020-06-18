@@ -2,55 +2,53 @@ import { readdirSync, mkdirSync, existsSync, readFile, writeFile } from 'fs';
 import { promisify } from 'util';
 import path from 'path';
 
-import { BrowsOptions, NamedOptions, isParent } from './types';
-import { TargetOptions } from '../options';
+import { Target, NamedTarget, isParent } from './types';
 
 export const dataDir = `${path.resolve(__dirname, 'data')}`;
 
 const read = promisify(readFile);
 const write = promisify(writeFile);
 
-export const readOptions = (name: string): Promise<NamedOptions> =>
-  read(`${dataDir}/${name}.json`, 'utf8').then((contents) => JSON.parse(contents) as NamedOptions);
+export const readTarget = (name: string): Promise<NamedTarget> =>
+  read(`${dataDir}/${name}.json`, 'utf8').then((contents) => JSON.parse(contents) as NamedTarget);
 
-export const readChildren = async (name: string): Promise<NamedOptions[]> => {
-  const options = await readOptions(name);
-  if (isParent(options)) {
-    const children = await Promise.all(options.children.map(readChildren));
+const readRecursive = async (name: string): Promise<NamedTarget[]> => {
+  const target = await readTarget(name);
+  if (isParent(target)) {
+    const children = await Promise.all(target.children.map(readRecursive));
     return children.flat();
   }
-  return [options];
+  return [target];
 };
 
-const writeOptions = (name: string, content: Partial<NamedOptions>) =>
-  write(`${dataDir}/${name}.json`, JSON.stringify({ name, ...content }), 'utf8');
+const writeTarget = (name: string, target: Partial<NamedTarget>) =>
+  write(`${dataDir}/${name}.json`, JSON.stringify({ name, ...target }), 'utf8');
 
-export const saveOptions = async (name: string, content: Partial<NamedOptions> | NamedOptions[]): Promise<void> => {
-  if ((Array.isArray(content) && content.length === 1) || !Array.isArray(content)) {
-    const { url, selector, contentType, forceBrowser } = Array.isArray(content) ? content[0] : content;
-    return writeOptions(name, { url, selector, contentType, forceBrowser });
+export const saveTarget = async (name: string, data: NamedTarget | NamedTarget[]): Promise<void> => {
+  if ((Array.isArray(data) && data.length === 1) || !Array.isArray(data)) {
+    const { url, selector, contentType, forceBrowser } = Array.isArray(data) ? data[0] : data;
+    return writeTarget(name, { url, selector, contentType, forceBrowser });
   }
-  return writeOptions(name, { children: [...new Set(content.map(({ name: childName }) => childName))] });
+
+  return writeTarget(name, { children: [...new Set(data.map(({ name: childName }) => childName))] });
 };
 
-export const updateSavedOptions = (name: string, updates: Partial<BrowsOptions>): Promise<void> =>
-  readOptions(name).then((savedOptions) => saveOptions(name, { ...savedOptions, ...updates }));
+export const updateSavedTarget = (name: string, updates: Partial<Target>): Promise<void> =>
+  readTarget(name).then((savedTarget) => saveTarget(name, { ...savedTarget, ...updates }));
 
-export const loadSavedOptions = async (names: string[], options: TargetOptions): Promise<NamedOptions[]> => {
-  const savedOptions: NamedOptions[][] = await Promise.all(
-    names.map((name) => readChildren(name).then((children) => children.map((savedChild) => ({ ...options, ...savedChild }))))
-  );
+export const loadSavedTargets = async (names: string[]): Promise<NamedTarget[]> => {
+  const savedTargets: NamedTarget[][] = await Promise.all(names.map(readRecursive));
 
   // Don't retrieve duplicate contents if multiple overlapping parents are passed in single run
-  const nameToOptions = savedOptions.flat().reduce((map: Record<string, NamedOptions>, options) => {
-    if (!map[options.name]) map[options.name] = options;
+  const nameToTarget = savedTargets.flat().reduce((map: Record<string, NamedTarget>, target) => {
+    if (!map[target.name]) map[target.name] = target;
     return map;
   }, {});
 
-  return Object.values(nameToOptions);
+  return Object.values(nameToTarget);
 };
 
-export const readSavedNames = (): string[] => {
+export const readSavedTargetNames = (): string[] => {
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir);
     return [];

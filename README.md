@@ -13,19 +13,19 @@ $ npm install -g brows
 ```console
 $ brows --help
 
-Retrieve contents of the first HTML element matching CSS selector in URL
+Retrieve content from the first HTML element matching CSS selector in URL
 
 Usage
   $ brows [options] <url> <selector>
   $ brows [options] <name> [<name> ...]
 
 Options
-  -s, --save <name>     Save input for future use with given name
+  -s, --save <name>     Save target for future use with given name
                         multiple saved names can be used at a time,
                         and grouped under a different name
   --save-only <name>    Save input and exit without retrieving content
-  -l, --list-saved      List saved options in alphabetical order
-                        can be used without input to list and exit
+  -l, --list-saved      List saved targets in alphabetical order
+                        can be used without input to only list and exit
   -h, --html            Retrieve outer HTML instead of text content
                         content type will be saved if save option is used
   -f, --force-browser   Prevent fetch attempt and force browser launch
@@ -57,7 +57,7 @@ $ brows -h info.cern.ch/hypertext/WWW/TheProject.html h1
 <h1>World Wide Web</h1>
 ```
 
-Input can be saved with a given name using `---save` or `--save-only`.
+Targets can be saved with a given name using `---save` or `--save-only`.
 
 ```console
 $ brows --save-only latestKurzgesagt 'youtube.com/user/Kurzgesagt/videos?sort=dd' '#video-title'
@@ -76,7 +76,8 @@ Options can be placed anywhere.
 
 ```console
 $ brows titleHtml -v
-Loading saved options for: titleHtml
+Loading saved target: titleHtml
+Loaded saved target: titleHtml
 Fetching http://info.cern.ch/hypertext/WWW/TheProject.html content
 Fetched http://info.cern.ch/hypertext/WWW/TheProject.html content
 Found titleHtml in fetched content
@@ -95,7 +96,7 @@ precipitation: 15%
 humidity: 58%
 ```
 
-Multiple saved options can also be grouped under a different name.
+Multiple saved targets can also be grouped under a different name.
 
 ```console
 $ brows temperature precipitation humidity --save-only weather
@@ -105,7 +106,7 @@ precipitation: 15%
 humidity: 58%
 ```
 
-`--list-saved` will display the contents of all saved options in alphabetical order.
+`--list-saved` will display the details of all saved targets in alphabetical order.
 
 ```console
 $ brows -l

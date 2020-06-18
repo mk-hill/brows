@@ -13,16 +13,16 @@ const cli = meow(
       $ brows [options] <name> [<name> ...] 
     
     Options
-      -s, --save <name>     Save input for future use with given name
+      -s, --save <name>     Save target for future use with given name
                             multiple saved names can be used at a time,
                             and grouped under a different name
       --save-only <name>    Save input and exit without retrieving content   
-      -l, --list-saved      List saved options in alphabetical order
+      -l, --list-saved      List saved targets in alphabetical order
                             can be used without input to only list and exit
       -h, --html            Retrieve outer HTML instead of text content
                             content type will be saved if save option is used
       -f, --force-browser   Prevent fetch attempt and force browser launch 
-                            will be updated automatically on saved options if
+                            will be updated automatically on saved targets if
                             fetch attempt fails, can also be saved manually
       -v, --verbose         Print additional details about what is being done
                             not saved, determined separately for each run
@@ -34,7 +34,7 @@ const cli = meow(
     reused if multiple saved names which target the same URL are passed 
 `,
   {
-    description: 'Retrieve contents of the first HTML element matching CSS selector in URL',
+    description: 'Retrieve content from the first HTML element matching CSS selector in URL',
     flags: {
       save: {
         type: 'string',
@@ -69,7 +69,7 @@ const cli = meow(
   }
 );
 
-brows(cli.input, cli.flags)
+brows(...cli.input, cli.flags)
   .then((results) => {
     if (results) console.log(formatResult(results));
     closeBrowser();

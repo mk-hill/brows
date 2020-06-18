@@ -1,19 +1,19 @@
 import { TargetOptions, RunOptions } from '../options';
-import { formatUrl, highlight, printIf } from '../util';
+import { formatUrl, highlight, printIf, plural } from '../util';
 
-import { readSavedNames, readOptions, loadSavedOptions, saveOptions } from './data';
-import { NamedOptions, BrowsOptions, ContentType } from './types';
+import { readSavedTargetNames, readTarget, loadSavedTargets, saveTarget } from './data';
+import { NamedTarget, Target, ContentType } from './types';
 
-export { readOptions, updateSavedOptions, dataDir } from './data';
-export { BrowsOptions, ContentType } from './types';
+export { readTarget, updateSavedTarget, dataDir } from './data';
+export { Target, ContentType } from './types';
 
-export async function buildOptions(input: string[], targetOptions: TargetOptions, runOptions: RunOptions): Promise<BrowsOptions[]> {
-  const savedNames = readSavedNames();
+export async function buildTargets(input: string[], targetOptions: TargetOptions, runOptions: RunOptions): Promise<Target[]> {
+  const savedNames = readSavedTargetNames();
 
   const { listSaved, verbose } = runOptions;
 
   if (listSaved) {
-    const listPromise = Promise.all(savedNames.sort().map(readOptions)).then(printOptions);
+    const listPromise = Promise.all(savedNames.sort().map(readTarget)).then(printTargets);
     if (!input.length) {
       await listPromise;
       return []; // Allow listSaved call with no input
@@ -24,19 +24,21 @@ export async function buildOptions(input: string[], targetOptions: TargetOptions
     throw new Error('No input');
   }
 
-  const { html, save, saveOnly } = targetOptions;
+  const { save, saveOnly, html, forceBrowser } = targetOptions;
   const name = save || saveOnly;
   const contentType = html ? ContentType.OUTER_HTML : ContentType.TEXT_CONTENT;
 
   const { stdout } = printIf(verbose);
 
-  let currentRunTargets: BrowsOptions[];
+  let currentRunTargets: Target[];
 
   if (input.every((str) => savedNames.includes(str))) {
-    stdout(`Loading saved options for: ${input.map(highlight).join(', ')}`);
-    currentRunTargets = await loadSavedOptions(input, targetOptions).then((options) => {
-      stdout(`Loaded saved options for: ${options.map(({ name }) => highlight(name)).join(', ')}`);
-      return options;
+    const word = plural('target', input.length);
+    stdout(`Loading saved ${word}: ${input.map(highlight).join(', ')}`);
+
+    currentRunTargets = await loadSavedTargets(input).then((targets) => {
+      stdout(`Loaded saved ${word}: ${targets.map(({ name }) => highlight(name)).join(', ')}`);
+      return targets;
     });
   } else {
     const url = formatUrl(input[0]);
@@ -45,13 +47,11 @@ export async function buildOptions(input: string[], targetOptions: TargetOptions
     if (!url || !selector) {
       throw new Error('URL and selector required');
     }
-    currentRunTargets = [{ name, url, selector, contentType }];
+    currentRunTargets = [{ name, url, selector, contentType, forceBrowser }];
   }
 
   if (name) {
-    const savePromise = saveOptions(name, currentRunTargets as NamedOptions[]).then(() =>
-      stdout(`Saved ${highlight(name)} options`)
-    );
+    const savePromise = saveTarget(name, currentRunTargets as NamedTarget[]).then(() => stdout(`Saved ${highlight(name)} target`));
     if (saveOnly) {
       await savePromise;
       return [];
@@ -61,14 +61,14 @@ export async function buildOptions(input: string[], targetOptions: TargetOptions
   return currentRunTargets;
 }
 
-function printOptions(namedOptions: NamedOptions[]) {
-  if (!namedOptions.length) return;
-  const formattedOptions = namedOptions.map(({ name, ...options }) => {
-    const contents = Object.entries(options)
+function printTargets(targets: NamedTarget[]) {
+  if (!targets.length) return;
+  const formattedTargets = targets.map(({ name, ...target }) => {
+    const contents = Object.entries(target)
       .map(([key, value]) => `  ${highlight(key)}: ${value}`)
       .join('\n');
 
     return `${highlight(name)}:\n${contents}`;
   });
-  console.log(formattedOptions.join('\n'));
+  console.log(formattedTargets.join('\n'));
 }

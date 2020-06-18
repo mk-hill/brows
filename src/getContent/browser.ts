@@ -1,22 +1,27 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { TimeoutError } from 'puppeteer/Errors';
 
-import { BrowsOptions } from '../targets';
+import { Target } from '../targets';
 import { highlight, printIf } from '../util';
 import { ElementNotFoundError } from './ElementNotFoundError';
+import { RunOptions } from '../options';
 
 let browserPromise: Promise<Browser>;
 const pages: Record<string, Promise<Page>> = {};
 
-export async function getContentsFromBrowser({ url, selector, contentType, verbose, name }: BrowsOptions): Promise<string> {
+export async function getContentsFromBrowser(target: Readonly<Target>, { verbose }: Readonly<RunOptions>): Promise<string> {
+  const { url, selector, contentType, name } = target;
+
   const { stdout } = printIf(verbose);
 
   if (!browserPromise) launchBrowser(verbose);
 
   const browser = await browserPromise;
 
+  const title = highlight(name || selector);
+
   if (!pages[url]) {
-    stdout(`Opening ${highlight(url)} page in browser`);
+    stdout(`Opening ${highlight(url)} page in browser for ${title}`);
     pages[url] = browser.newPage().then((page) =>
       page.goto(url).then(() => {
         stdout(`Page navigation to ${highlight(url)} complete`);
@@ -24,12 +29,12 @@ export async function getContentsFromBrowser({ url, selector, contentType, verbo
       })
     );
   } else {
-    stdout(`Using existing ${highlight(url)} page for ${highlight(name || selector)}`);
+    stdout(`Using existing ${highlight(url)} page for ${title}`);
   }
 
   const page = await pages[url];
 
-  stdout(`Waiting for ${highlight(name || selector)} in browser page`);
+  stdout(`Waiting for ${title} in browser page`);
   await page.waitForSelector(selector).catch((e) => {
     if (e instanceof TimeoutError) {
       throw new ElementNotFoundError(url, selector);
@@ -37,7 +42,7 @@ export async function getContentsFromBrowser({ url, selector, contentType, verbo
     throw new Error(`Unable wait for selector "${selector}": ${e.message}`);
   });
 
-  stdout(name ? `Found ${highlight(name)} in browser page` : `Found ${highlight(selector)} in ${highlight(url)} using browser`);
+  stdout(`Found ${title} in browser page`);
 
   return page.$eval(selector, (element, contentType) => element[contentType] ?? '', contentType);
 }
