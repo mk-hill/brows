@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import { JSDOM } from 'jsdom';
 
-import { BrowsOptions } from '../options';
+import { BrowsOptions } from '../targets';
 import { printIf, highlight } from '../util';
 import { ElementNotFoundError } from './ElementNotFoundError';
 

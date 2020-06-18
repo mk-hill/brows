@@ -2,9 +2,9 @@
 
 import meow from 'meow';
 
-import { brows } from '.';
-import { closeBrowser } from './getContent';
-import { highlight } from './util';
+import brows, { closeBrowser } from '.';
+import { options as defaults } from './defaults';
+import { highlight, formatResult } from './util';
 
 const cli = meow(
   `
@@ -39,42 +39,42 @@ const cli = meow(
       save: {
         type: 'string',
         alias: 's',
+        default: defaults.save,
       },
       saveOnly: {
         type: 'string',
+        default: defaults.saveOnly,
       },
       listSaved: {
         type: 'boolean',
         alias: 'l',
-        default: false,
+        default: defaults.listSaved,
       },
       html: {
         type: 'boolean',
         alias: 'h',
-        default: false,
+        default: defaults.html,
       },
       forceBrowser: {
         type: 'boolean',
         alias: 'f',
-        default: false,
+        default: defaults.forceBrowser,
       },
       verbose: {
         type: 'boolean',
         alias: 'v',
-        default: false,
+        default: defaults.verbose,
       },
     },
   }
 );
 
-brows(cli)
+brows(cli.input, cli.flags)
   .then((results) => {
-    if (results) console.log(results);
+    if (results) console.log(formatResult(results));
     closeBrowser();
   })
   .catch((e) => {
     console.error(e.message + `\nTry '${highlight('brows --help')}' for more information`);
     closeBrowser().then(() => process.exit(1));
   });
-
-export type CLI = typeof cli;

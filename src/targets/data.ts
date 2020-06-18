@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import path from 'path';
 
 import { BrowsOptions, NamedOptions, isParent } from './types';
-import { CLI } from '../cli';
+import { TargetOptions } from '../options';
 
 export const dataDir = `${path.resolve(__dirname, 'data')}`;
 
@@ -36,9 +36,9 @@ export const saveOptions = async (name: string, content: Partial<NamedOptions> |
 export const updateSavedOptions = (name: string, updates: Partial<BrowsOptions>): Promise<void> =>
   readOptions(name).then((savedOptions) => saveOptions(name, { ...savedOptions, ...updates }));
 
-export const loadSavedOptions = async (names: string[], flags: CLI['flags']): Promise<NamedOptions[]> => {
+export const loadSavedOptions = async (names: string[], options: TargetOptions): Promise<NamedOptions[]> => {
   const savedOptions: NamedOptions[][] = await Promise.all(
-    names.map((name) => readChildren(name).then((children) => children.map((savedChild) => ({ ...flags, ...savedChild }))))
+    names.map((name) => readChildren(name).then((children) => children.map((savedChild) => ({ ...options, ...savedChild }))))
   );
 
   // Don't retrieve duplicate contents if multiple overlapping parents are passed in single run

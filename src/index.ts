@@ -1,23 +1,34 @@
-import type { CLI } from './cli';
-
+import * as defaults from './defaults';
 import { getContent, launchBrowser } from './getContent';
-import { formatResults } from './util';
-import { buildOptions } from './options';
+import { buildOptions as buildTargets } from './targets';
+import { splitOptions, Options } from './options';
 
-export async function brows(cli: CLI): Promise<string> {
-  const allOptions = await buildOptions(cli);
+export { launchBrowser, closeBrowser } from './getContent';
 
-  // Launch browser in advance if any options are known to require it
-  if (allOptions.some(({ forceBrowser }) => forceBrowser)) {
-    launchBrowser(allOptions.some(({ verbose }) => verbose));
+export type Result<T extends string> = Record<T | typeof defaults['targetName'], string>;
+
+/**
+ * Retrieve content from target(s)
+ * @param input array containing either one url followed by one selector, or any number of saved target names
+ * @param options optional options object
+ * @returns promise which resolves to an object with names (or 'content' for anonymous targets) as keys and results as values
+ */
+export default async function brows<T extends string>(input: T[], options: Partial<Options> = {}): Promise<Result<T>> {
+  const [runOptions, targetOptions] = splitOptions({ ...defaults.options, ...options });
+
+  const targets = await buildTargets(input, targetOptions, runOptions);
+
+  // Launch browser in advance if any targets are known to require it
+  if (targets.some(({ forceBrowser }) => forceBrowser)) {
+    launchBrowser(runOptions.verbose);
   }
 
   const results = await Promise.all(
-    allOptions.map(async (options) => ({
-      name: options.name,
-      content: await getContent(options),
+    targets.map(async (target) => ({
+      name: target.name,
+      content: await getContent(target),
     }))
   );
 
-  return formatResults(results);
+  return results.reduce((result, { name, content }) => ({ ...result, [name || defaults.targetName]: content }), {} as Result<T>);
 }

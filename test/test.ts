@@ -1,125 +1,150 @@
-import { brows } from '../src';
-import { readOptions } from '../src/options';
-import { options, results } from './setup';
+import brows from '../src';
+import { readOptions, ContentType } from '../src/targets';
+import { urls, selectors, results, names } from './setup';
+
+const { h1 } = selectors;
 
 describe('Invalid input', () => {
-  test('Throws with no input', () => expect(brows(options.noInput)).rejects.toThrow());
+  test('Throws with no input', () => expect(brows([])).rejects.toThrow());
 
-  test('Throws with url or selector missing', () => expect(brows(options.noSelector)).rejects.toThrow());
+  test('Throws with url or selector missing', () => expect(brows([urls.fetch])).rejects.toThrow());
 });
 
-describe('Unnamed options', () => {
-  test('Fetches text content', () => expect(brows(options.fetchText)).resolves.toBe(results.fetchText));
+describe('Anonymous targets', () => {
+  test('Fetches text content', () =>
+    expect(brows([urls.fetch, h1])).resolves.toMatchObject({ [names.default]: results.fetchText }));
 
-  test('Retrieves text content from SPA', () => expect(brows(options.spaText)).resolves.toBe(results.spaText));
+  test('Retrieves text content from SPA', () =>
+    expect(brows([urls.spa, h1], { verbose: true })).resolves.toMatchObject({ [names.default]: results.spaText }));
 
-  test('Fetches outer HTML', () => expect(brows(options.fetchHtml)).resolves.toMatch(results.fetchHtml));
+  test('Fetches outer HTML', () =>
+    expect(brows([urls.fetch, h1], { html: true })).resolves.toMatchObject({ [names.default]: results.fetchHtml }));
 
-  test('Retrieves outer HTML from SPA', () => expect(brows(options.spaHtml)).resolves.toMatch(results.spaHtml));
+  test('Retrieves outer HTML from SPA', () =>
+    expect(brows([urls.spa, h1], { html: true })).resolves.toMatchObject({ [names.default]: results.spaHtml }));
 
-  test('Retrieves content from unformatted URL', () => expect(brows(options.formatUrl)).resolves.toBe(results.fetchText));
+  test('Retrieves content from unformatted URL', () =>
+    expect(brows([urls.unformatted, h1])).resolves.toMatchObject({ [names.default]: results.fetchText }));
 });
 
-describe('Saved options', () => {
-  test('Saves fetch text content options', () =>
-    brows(options.saveFetch).then(() =>
-      expect(readOptions(options.saveFetch.flags.save)).resolves.toMatchObject({
-        url: options.saveFetch.input[0],
-        selector: options.saveFetch.input[1],
-        contentType: 'textContent',
+describe('Named targets', () => {
+  test('Saves fetch text content target', () =>
+    brows([urls.fetch, h1], { saveOnly: names.fetchText }).then(() =>
+      expect(readOptions(names.fetchText)).resolves.toMatchObject({
+        url: urls.fetch,
+        selector: h1,
+        contentType: ContentType.TEXT_CONTENT,
       })
     ));
 
-  test('Fetches text content from saved options', () => expect(brows(options.savedFetch)).resolves.toBe(results.fetchText));
+  test('Fetches text content from saved target', () =>
+    expect(brows([names.fetchText])).resolves.toMatchObject({ [names.fetchText]: results.fetchText }));
 
-  test('Saves fetch outer HTML options', () =>
-    brows(options.saveFetchHtml).then(() =>
-      expect(readOptions(options.saveFetchHtml.flags.save)).resolves.toMatchObject({
-        url: options.saveFetchHtml.input[0],
-        selector: options.saveFetchHtml.input[1],
-        contentType: 'outerHTML',
+  test('Saves fetch outer HTML target', () =>
+    brows([urls.fetch, h1], { html: true, saveOnly: names.fetchHtml }).then(() =>
+      expect(readOptions(names.fetchHtml)).resolves.toMatchObject({
+        url: urls.fetch,
+        selector: h1,
+        contentType: ContentType.OUTER_HTML,
       })
     ));
+  test('Fetches outer HTML from saved target', () =>
+    expect(brows([names.fetchHtml])).resolves.toMatchObject({ [names.fetchHtml]: results.fetchHtml }));
 
-  test('Fetches outer HTML from saved options', () => expect(brows(options.savedFetchHtml)).resolves.toMatch(results.fetchHtml));
-
-  test('Updates saved SPA text content options to skip fetch attempt', () =>
-    brows(options.saveSpa).then(() =>
-      expect(readOptions(options.saveSpa.flags.save)).resolves.toMatchObject({
-        url: options.saveSpa.input[0],
-        selector: options.saveSpa.input[1],
-        contentType: 'textContent',
+  test('Updates saved SPA text content target to skip fetch attempt', () =>
+    brows([urls.spa, h1], { save: names.spaText }).then(() =>
+      expect(readOptions(names.spaText)).resolves.toMatchObject({
+        url: urls.spa,
+        selector: h1,
+        contentType: ContentType.TEXT_CONTENT,
         forceBrowser: true,
       })
     ));
 
-  test('Retrieves text content from saved SPA options', () => expect(brows(options.savedSpa)).resolves.toBe(results.spaText));
+  test('Retrieves text content from saved SPA target', () =>
+    expect(brows([names.spaText])).resolves.toMatchObject({ [names.spaText]: results.spaText }));
 
-  test('Updates saved SPA outer HTML options to skip fetch attempt', () =>
-    brows(options.saveSpaHtml).then(() =>
-      expect(readOptions(options.saveSpaHtml.flags.save)).resolves.toMatchObject({
-        url: options.saveSpaHtml.input[0],
-        selector: options.saveSpaHtml.input[1],
-        contentType: 'outerHTML',
+  test('Updates saved SPA outer HTML target to skip fetch attempt', () =>
+    brows([urls.spa, h1], { html: true, save: names.spaHtml }).then(() =>
+      expect(readOptions(names.spaHtml)).resolves.toMatchObject({
+        url: urls.spa,
+        selector: h1,
+        contentType: ContentType.OUTER_HTML,
         forceBrowser: true,
       })
     ));
 
-  test('Retrieves outer HTML from saved SPA options', () => expect(brows(options.savedSpaHtml)).resolves.toMatch(results.spaHtml));
+  test('Retrieves outer HTML from saved SPA target', () =>
+    expect(brows([names.spaHtml])).resolves.toMatchObject({ [names.spaHtml]: results.spaHtml }));
 
-  test('Retrieves contents from multiple saved options', () =>
-    expect(brows(options.multipleSaved)).resolves.toMatch(results.allText));
+  test('Retrieves contents from multiple saved targets', () =>
+    expect(brows([names.fetchText, names.fetchHtml, names.spaText, names.spaHtml])).resolves.toMatchObject({
+      [names.fetchText]: results.fetchText,
+      [names.fetchHtml]: results.fetchHtml,
+      [names.spaText]: results.spaText,
+      [names.spaHtml]: results.spaHtml,
+    }));
 });
 
-describe('Parent Options', () => {
-  test('Saves multiple text content options under one parent', () =>
-    brows(options.saveParentText).then(() =>
-      expect(readOptions(options.saveParentText.flags.saveOnly)).resolves.toMatchObject({
-        children: options.saveParentText.input,
+describe('Parent Targets', () => {
+  test('Saves multiple text content targets under one parent', () =>
+    brows([names.fetchText, names.spaText], { saveOnly: names.textParent }).then(() =>
+      expect(readOptions(names.textParent)).resolves.toMatchObject({
+        children: [names.fetchText, names.spaText],
       })
     ));
 
   test('Retrieves multiple text contents from single parent', () =>
-    expect(brows(options.savedParentText)).resolves.toMatch(results.allText));
+    expect(brows([names.textParent])).resolves.toMatchObject({
+      [names.fetchText]: results.fetchText,
+      [names.spaText]: results.spaText,
+    }));
 
-  test('Saves multiple outer html options under one parent', () =>
-    brows(options.saveParentHtml).then(() =>
-      expect(readOptions(options.saveParentHtml.flags.saveOnly)).resolves.toMatchObject({
-        children: options.saveParentHtml.input,
+  test('Saves multiple outer html targets under one parent', () =>
+    brows([names.fetchHtml, names.spaHtml], { saveOnly: names.htmlParent }).then(() =>
+      expect(readOptions(names.htmlParent)).resolves.toMatchObject({
+        children: [names.fetchHtml, names.spaHtml],
       })
     ));
 
   test('Retrieves multiple outer html results from single saved parent', () =>
-    expect(brows(options.savedParentHtml)).resolves.toMatch(results.allText));
+    expect(brows([names.htmlParent])).resolves.toMatchObject({
+      [names.fetchHtml]: results.fetchHtml,
+      [names.spaHtml]: results.spaHtml,
+    }));
 
   test('Saves different content types under one parent', () =>
-    brows(options.saveParentWww).then(() =>
-      expect(readOptions(options.saveParentWww.flags.saveOnly)).resolves.toMatchObject({
-        children: options.saveParentWww.input,
+    brows([names.fetchText, names.fetchHtml], { saveOnly: names.fetchParent }).then(() =>
+      expect(readOptions(names.fetchParent)).resolves.toMatchObject({
+        children: [names.fetchText, names.fetchHtml],
       })
     ));
 
   test('Retrieves different content types from single saved parent', () =>
-    expect(brows(options.savedParentWww)).resolves.toMatch(new RegExp(`.*?(${results.fetchText}|${results.fetchText}</h1>)`)));
+    expect(brows([names.fetchParent])).resolves.toMatchObject({
+      [names.fetchText]: results.fetchText,
+      [names.fetchHtml]: results.fetchHtml,
+    }));
 
   test('Saves combined parents under new parent', () =>
-    brows(options.saveCombinedParents).then(async () =>
-      expect(readOptions(options.saveCombinedParents.flags.saveOnly)).resolves.toMatchObject({
-        children: await Promise.all(
-          options.saveCombinedParents.input.map((parentName) => readOptions(parentName).then(({ children }) => children))
-        ).then((ar) => ar.flat()),
+    brows([names.textParent, names.htmlParent], { saveOnly: names.combinedParents }).then(async () =>
+      expect(readOptions(names.combinedParents)).resolves.toMatchObject({
+        children: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
       })
     ));
 
   test('Retrieves all content from saved combined parent', () =>
-    expect(brows(options.savedCombinedParents)).resolves.toMatch(results.allContent));
+    expect(brows([names.combinedParents])).resolves.toMatchObject({
+      [names.fetchText]: results.fetchText,
+      [names.fetchHtml]: results.fetchHtml,
+      [names.spaText]: results.spaText,
+      [names.spaHtml]: results.spaHtml,
+    }));
 
   test('Does not save duplicates when saving overlapping parents', () =>
-    brows(options.saveOverlappingParents).then(async () =>
-      expect(readOptions(options.saveOverlappingParents.flags.saveOnly)).resolves.toMatchObject({
-        children: await Promise.all(
-          options.saveCombinedParents.input.map((parentName) => readOptions(parentName).then(({ children }) => children))
-        ).then((ar) => ar.flat()),
+    brows([names.textParent, names.htmlParent, names.fetchParent], { saveOnly: names.overlappingParents }).then(async () =>
+      expect(readOptions(names.overlappingParents)).resolves.toMatchObject({
+        children: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
       })
     ));
 });

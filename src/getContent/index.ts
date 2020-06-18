@@ -1,6 +1,6 @@
 import { fetchContents } from './fetch';
 import { getContentsFromBrowser } from './browser';
-import { BrowsOptions, updateSavedOptions } from '../options';
+import { BrowsOptions, updateSavedOptions } from '../targets';
 import { ElementNotFoundError } from './ElementNotFoundError';
 import { highlight, printIf } from '../util';
 

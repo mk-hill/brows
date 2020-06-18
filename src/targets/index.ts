@@ -1,16 +1,18 @@
+import { TargetOptions, RunOptions } from '../options';
 import { formatUrl, highlight, printIf } from '../util';
-import { CLI } from '../cli';
 
 import { readSavedNames, readOptions, loadSavedOptions, saveOptions } from './data';
 import { NamedOptions, BrowsOptions, ContentType } from './types';
 
-export { readOptions, dataDir, updateSavedOptions } from './data';
-export { BrowsOptions } from './types';
+export { readOptions, updateSavedOptions, dataDir } from './data';
+export { BrowsOptions, ContentType } from './types';
 
-export async function buildOptions({ input, flags }: CLI): Promise<BrowsOptions[]> {
+export async function buildOptions(input: string[], targetOptions: TargetOptions, runOptions: RunOptions): Promise<BrowsOptions[]> {
   const savedNames = readSavedNames();
 
-  if (flags.listSaved) {
+  const { listSaved, verbose } = runOptions;
+
+  if (listSaved) {
     const listPromise = Promise.all(savedNames.sort().map(readOptions)).then(printOptions);
     if (!input.length) {
       await listPromise;
@@ -22,7 +24,7 @@ export async function buildOptions({ input, flags }: CLI): Promise<BrowsOptions[
     throw new Error('No input');
   }
 
-  const { html, save, verbose, saveOnly } = flags;
+  const { html, save, saveOnly } = targetOptions;
   const name = save || saveOnly;
   const contentType = html ? ContentType.OUTER_HTML : ContentType.TEXT_CONTENT;
 
@@ -32,8 +34,8 @@ export async function buildOptions({ input, flags }: CLI): Promise<BrowsOptions[
 
   if (input.every((str) => savedNames.includes(str))) {
     stdout(`Loading saved options for: ${input.map(highlight).join(', ')}`);
-    currentRunTargets = await loadSavedOptions(input, flags).then((options) => {
-      stdout(`Loaded saved options for: ${options.map(({ name }) => highlight(name)).join()}`);
+    currentRunTargets = await loadSavedOptions(input, targetOptions).then((options) => {
+      stdout(`Loaded saved options for: ${options.map(({ name }) => highlight(name)).join(', ')}`);
       return options;
     });
   } else {
@@ -43,7 +45,7 @@ export async function buildOptions({ input, flags }: CLI): Promise<BrowsOptions[
     if (!url || !selector) {
       throw new Error('URL and selector required');
     }
-    currentRunTargets = [{ name, url, selector, contentType, ...flags }];
+    currentRunTargets = [{ name, url, selector, contentType }];
   }
 
   if (name) {

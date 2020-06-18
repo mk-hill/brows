@@ -1,7 +1,7 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { TimeoutError } from 'puppeteer/Errors';
 
-import { BrowsOptions } from '../options';
+import { BrowsOptions } from '../targets';
 import { highlight, printIf } from '../util';
 import { ElementNotFoundError } from './ElementNotFoundError';
 
@@ -29,7 +29,7 @@ export async function getContentsFromBrowser({ url, selector, contentType, verbo
 
   const page = await pages[url];
 
-  stdout(`Waiting for ${highlight(name || selector)} in page`);
+  stdout(`Waiting for ${highlight(name || selector)} in browser page`);
   await page.waitForSelector(selector).catch((e) => {
     if (e instanceof TimeoutError) {
       throw new ElementNotFoundError(url, selector);
