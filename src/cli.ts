@@ -71,7 +71,8 @@ const cli = meow(
 
 brows(...cli.input, cli.flags)
   .then((results) => {
-    if (results) console.log(formatResult(results));
+    const message = formatResult(results);
+    if (message.trim()) console.log(message);
     closeBrowser();
   })
   .catch((e) => {

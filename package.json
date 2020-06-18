@@ -1,7 +1,7 @@
 {
   "name": "brows",
   "description": "An easy to use CLI for consuming text content from any website",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "bin": {
     "brows": "lib/cli.js"
   },
