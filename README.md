@@ -29,10 +29,13 @@ Options
   -h, --html            Retrieve outer HTML instead of text content
                         content type will be saved if save option is used
   -f, --force-browser   Prevent fetch attempt and force browser launch
-                        will be updated automatically on saved options if
+                        will be updated automatically on saved targets if
                         fetch attempt fails, can also be saved manually
+  -o, --ordered         Wait for all content and print results in the
+                        order they were passed. groups will expand to
+                        their members in the order they were saved
   -v, --verbose         Print additional details about what is being done
-                        not saved, determined separately for each run
+  --help                Display this message
 
 By default, will initially attempt to retrieve content from fetched HTML
 If this fails, a headless browser will be used instead
@@ -106,37 +109,58 @@ precipitation: 15%
 humidity: 58%
 ```
 
-`--list-saved` will display the details of all saved targets in alphabetical order.
+Saving with a previously saved target name will overwrite its contents. This can also be used to add more targets to an existing group.
 
 ```console
-$ brows -l
-humidity:
-  url: http://google.com/search?q=weather
-  selector: #wob_hm
-  contentType: textContent
-  forceBrowser: true
-latestKurzgesagt:
-  url: http://youtube.com/user/Kurzgesagt/videos?sort=dd
-  selector: #video-title
-  contentType: textContent
-  forceBrowser: true
-precipitation:
-  url: http://google.com/search?q=weather
-  selector: #wob_pp
-  contentType: textContent
-  forceBrowser: true
-temperature:
-  url: http://google.com/search?q=weather
-  selector: #wob_ttm
-  contentType: textContent
-  forceBrowser: true
-titleHtml:
-  url: http://info.cern.ch/hypertext/WWW/TheProject.html
-  selector: h1
-  contentType: outerHTML
-  forceBrowser: false
-weather:
-  children: temperature,precipitation,humidity
+$ brows 'google.com/search?q=weather' '#wob_tws' --save-only wind
+$ brows weather wind --save-only weather
+$ brows weather
+temperature: 27
+precipitation: 15%
+humidity: 58%
+wind: 3 km/h
+```
+
+All targets are processed asynchronously, and each URL will have its content fetched (and/or a browser page navigated to it) only once per run, regardless of how many selectors it has been targeted with.
+
+Since each run will only take as long as its single longest running target, it's generally much faster to retrieve all desired content together rather than performing separate runs for each target.
+
+Further grouping saved targets (and groups of targets) makes this easy to do for content you expect to retrieve frequently.
+
+By default, results are printed as they are retrieved.
+
+```console
+$ brows --save-only lastBuild travis-ci.com/github/mk-hill/brows/builds '.row-li [href*="builds"] .label-align'
+$ brows --save-only openIssues github.com/mk-hill/brows 'a[href*="issues"] .Counter'
+$ brows --save-only status lastBuild openIssues
+$ brows --save-only canIBuyItYet amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090 '#availability span'
+$ brows --save-only all weather status canIBuyItYet latestKurzgesagt titleHtml
+$ brows all
+titleHtml: <h1>World Wide Web</h1>
+openIssues: 0
+lastBuild: #12 passed
+temperature: 27
+precipitation: 15%
+humidity: 58%
+wind: 3 km/h
+latestKurzgesagt: Could Solar Storms Destroy Civilization? Solar Flares & Coronal Mass Ejections
+canIBuyItYet: Temporarily out of stock.
+```
+
+The `--ordered` option can be used to wait for every target's content to be retrieved and print all of them together in the order they were passed instead.
+
+```console
+$ brows all -o
+temperature: 27
+precipitation: 15%
+humidity: 58%
+wind: 3 km/h
+lastBuild: #12 passed
+openIssues: 0
+canIBuyItYet: Temporarily out of stock.
+latestKurzgesagt: Could Solar Storms Destroy Civilization? Solar Flares & Coronal Mass Ejections
+titleHtml: <h1>World Wide Web</h1>
+
 ```
 
 By default, brows will only resort to launching a headless browser if it can't find the given selector in the HTML content it fetches. This can be overridden using the `--force-browser` option.

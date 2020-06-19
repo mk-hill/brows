@@ -28,16 +28,15 @@ export async function buildTargets(input: string[], targetOptions: TargetOptions
   const name = save || saveOnly;
   const contentType = html ? ContentType.OUTER_HTML : ContentType.TEXT_CONTENT;
 
-  const { stdout } = printIf(verbose);
+  const { stdout, stderr } = printIf(verbose);
 
   let currentRunTargets: Target[];
 
-  if (input.every((str) => savedNames.includes(str))) {
-    const word = plural('target', input.length);
-    stdout(`Loading saved ${word}: ${input.map(highlight).join(', ')}`);
+  if (input.every((param) => savedNames.includes(param))) {
+    stdout(`Loading saved ${plural('target', input.length)}: ${input.map(highlight).join(', ')}`);
 
     currentRunTargets = await loadSavedTargets(input).then((targets) => {
-      stdout(`Loaded saved ${word}: ${targets.map(({ name }) => highlight(name)).join(', ')}`);
+      stdout(`Loaded saved ${plural('target', targets.length)}: ${targets.map(({ name }) => highlight(name)).join(', ')}`);
       return targets;
     });
   } else {
@@ -47,6 +46,12 @@ export async function buildTargets(input: string[], targetOptions: TargetOptions
     if (!url || !selector) {
       throw new Error('URL and selector required');
     }
+
+    if (input.length > 2) {
+      const extraParams = input.slice(2).map(highlight).join(', ');
+      stderr(`Expected one URL and one CSS selector, received ${highlight(input.length)} parameters. Ignoring: ${extraParams}`);
+    }
+
     currentRunTargets = [{ name, url, selector, contentType, forceBrowser }];
   }
 

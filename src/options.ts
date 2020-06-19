@@ -16,6 +16,7 @@ export interface TargetOptions {
  */
 export interface RunOptions {
   listSaved: boolean;
+  ordered: boolean;
   verbose: boolean;
 }
 

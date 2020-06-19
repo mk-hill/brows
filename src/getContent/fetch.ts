@@ -12,8 +12,10 @@ export async function fetchContents(target: Readonly<Target>, { verbose }: Reado
   const { url, selector, contentType, name } = target;
   const { stdout } = printIf(verbose);
 
+  const title = highlight(name || selector);
+
   if (!documents[url]) {
-    stdout(`Fetching ${highlight(url)} content`);
+    stdout(`Fetching ${highlight(url)} content for ${title}`);
     documents[url] = fetch(url)
       .catch((e) => {
         throw new Error(`Unable to fetch HTML content: ${e.message}`);
@@ -27,7 +29,7 @@ export async function fetchContents(target: Readonly<Target>, { verbose }: Reado
       })
       .then((html) => new JSDOM(html).window.document);
   } else {
-    stdout(`Using previous ${highlight(url)} fetch for ${highlight(name || selector)}`);
+    stdout(`Using previous ${highlight(url)} fetch for ${title}`);
   }
 
   const document = await documents[url];

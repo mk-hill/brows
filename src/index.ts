@@ -2,6 +2,7 @@ import * as defaults from './defaults';
 import { getContent, launchBrowser } from './getContent';
 import { extractOptions, Options } from './options';
 import { buildTargets } from './targets';
+import { formatSingleResult } from './util';
 
 export { launchBrowser, closeBrowser } from './getContent';
 
@@ -18,18 +19,22 @@ export type Result = Record<string, string>;
  */
 export default async function brows(...args: Input): Promise<Result> {
   const [input, targetOptions, runOptions] = extractOptions(args);
+  const { verbose, ordered } = runOptions;
 
   const targets = await buildTargets(input, targetOptions, runOptions);
 
   // Launch browser in advance if any targets are known to require it
   if (targets.some(({ forceBrowser }) => forceBrowser)) {
-    launchBrowser(runOptions.verbose);
+    launchBrowser(verbose);
   }
 
   const results = await Promise.all(
     targets.map(async (target) => ({
       name: target.name,
-      content: await getContent(target, runOptions),
+      content: await getContent(target, runOptions).then((content) => {
+        if (!ordered) console.log(formatSingleResult(target.name, content, targets.length > 1));
+        return content;
+      }),
     }))
   );
 

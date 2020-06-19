@@ -1,4 +1,6 @@
-import { targetName as defaultName } from '../src/defaults';
+import * as defaults from '../src/defaults';
+
+defaults.options.ordered = true;
 
 export const urls = {
   unformatted: 'info.cern.ch/hypertext/WWW/TheProject.html',
@@ -11,7 +13,7 @@ export const selectors = {
 };
 
 export const names = {
-  default: defaultName,
+  default: defaults.targetName,
   fetchText: 'fetchText',
   fetchHtml: 'fetchHtml',
   spaText: 'spaText',

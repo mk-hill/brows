@@ -9,6 +9,7 @@ export const targetOptions: TargetOptions = {
 
 export const runOptions: RunOptions = {
   listSaved: false,
+  ordered: false,
   verbose: false,
 };
 
