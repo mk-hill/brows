@@ -123,11 +123,9 @@ wind: 3 km/h
 
 All targets are processed asynchronously, and each URL will have its content fetched (and/or a browser page navigated to it) only once per run, regardless of how many selectors it has been targeted with.
 
-Since each run will only take as long as its single longest running target, it's generally much faster to retrieve all desired content together rather than performing separate runs for each target.
+Since each run will only take as long as its single longest running target, it's generally much faster to retrieve all desired content together rather than performing a separate run for each target.
 
 Further grouping saved targets (and groups of targets) makes this easy to do for content you expect to retrieve frequently.
-
-By default, results are printed as they are retrieved.
 
 ```console
 $ brows --save-only lastBuild travis-ci.com/github/mk-hill/brows/builds '.row-li [href*="builds"] .label-align'
@@ -135,6 +133,11 @@ $ brows --save-only openIssues github.com/mk-hill/brows 'a[href*="issues"] .Coun
 $ brows --save-only status lastBuild openIssues
 $ brows --save-only canIBuyItYet amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090 '#availability span'
 $ brows --save-only all weather status canIBuyItYet latestKurzgesagt titleHtml
+```
+
+Results are printed as they are retrieved by default.
+
+```console
 $ brows all
 titleHtml: <h1>World Wide Web</h1>
 openIssues: 0
