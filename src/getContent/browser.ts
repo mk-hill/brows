@@ -9,7 +9,7 @@ import { RunOptions } from '../options';
 let browserPromise: Promise<Browser>;
 const pages: Record<string, Promise<Page>> = {};
 
-export async function getContentsFromBrowser(target: Readonly<Target>, { verbose }: Readonly<RunOptions>): Promise<string> {
+export async function getContentFromBrowser(target: Readonly<Target>, { verbose }: Readonly<RunOptions>): Promise<string> {
   const { url, selector, contentType, name } = target;
 
   const { stdout } = printIf(verbose);

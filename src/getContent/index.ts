@@ -1,5 +1,5 @@
-import { fetchContents } from './fetch';
-import { getContentsFromBrowser } from './browser';
+import { getContentFromResponse } from './request';
+import { getContentFromBrowser } from './browser';
 import { Target, updateSavedTarget } from '../targets';
 import { ElementNotFoundError } from './ElementNotFoundError';
 import { highlight, printIf } from '../util';
@@ -15,24 +15,22 @@ export async function getContent(target: Target, options: Readonly<RunOptions>):
 
   if (!forceBrowser) {
     try {
-      return await fetchContents(target, options);
+      return await getContentFromResponse(target, options);
     } catch (error) {
       const message =
-        error instanceof ElementNotFoundError
-          ? `Element not found in fetched`
-          : `Received error "${error.message}" while attempting to fetch`;
-      stderr(`${message} ${title} content, using browser`);
+        error instanceof ElementNotFoundError ? `Element not found in` : `Received error "${error.message}" while requesting`;
+      stderr(`${message} ${title} response data, using browser`);
 
       if (name && !forceBrowser) {
         updateSavedTarget(name, { forceBrowser: true }).then(() =>
-          stdout(`Updated saved ${highlight(name)} target to skip fetch attempt in the future`)
+          stdout(`Updated saved target ${highlight(name)} to skip request attempt in the future`)
         );
       }
     }
   } else {
-    stdout(`Skipping fetch attempt for ${title}`);
+    stdout(`Skipping request attempt for ${title}`);
   }
 
   stdout(`Retrieving ${title} content from browser`);
-  return getContentsFromBrowser(target, options);
+  return getContentFromBrowser(target, options);
 }
