@@ -2,19 +2,19 @@ import * as defaults from './defaults';
 import { Input } from '.';
 
 /**
- * Options saved per target
+ * Options saved as part of each target
  */
 export interface TargetOptions {
-  save: string;
-  saveOnly: string;
   html: boolean;
   forceBrowser: boolean;
 }
 
 /**
- * Options determined separately for each run
+ * Options used separately for each run
  */
 export interface RunOptions {
+  save: string;
+  saveOnly: string;
   listSaved: boolean;
   ordered: boolean;
   verbose: boolean;

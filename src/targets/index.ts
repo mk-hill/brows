@@ -10,7 +10,7 @@ export { Target, ContentType } from './types';
 export async function buildTargets(input: string[], targetOptions: TargetOptions, runOptions: RunOptions): Promise<Target[]> {
   const savedNames = readSavedTargetNames();
 
-  const { listSaved, verbose } = runOptions;
+  const { listSaved, verbose, save, saveOnly } = runOptions;
 
   if (listSaved) {
     const listPromise = Promise.all(savedNames.sort().map(readTarget)).then(printTargets);
@@ -24,7 +24,7 @@ export async function buildTargets(input: string[], targetOptions: TargetOptions
     throw new Error('No input');
   }
 
-  const { save, saveOnly, html, forceBrowser } = targetOptions;
+  const { html, forceBrowser } = targetOptions;
   const name = save || saveOnly;
   const contentType = html ? ContentType.OUTER_HTML : ContentType.TEXT_CONTENT;
 

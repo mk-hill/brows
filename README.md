@@ -45,6 +45,9 @@ When multiple saved names are passed, brows will only make a request
 (and/or navigate a browser page) to each URL once.
 All targets in the same URL will be retrieved from the same response
 data and/or browser page.
+
+Conventional HTTP_PROXY/HTTPS_PROXY/NO_PROXY environment variables
+will be used if they exist.
 ```
 
 ## Examples
@@ -95,25 +98,17 @@ Multiple saved names can be used at a time.
 ```console
 $ brows 'google.com/search?q=weather' '#wob_ttm' --save-only temperature
 $ brows 'google.com/search?q=weather' '#wob_pp' --save-only precipitation
+$ brows 'google.com/search?q=weather' '#wob_hm' --save-only humidity
 $ brows temperature precipitation humidity
 temperature: 27
 precipitation: 15%
+humidity: 58%
 ```
 
 Multiple saved targets can also be grouped under a different name.
 
 ```console
-$ brows temperature precipitation --save-only weather
-$ brows weather
-temperature: 27
-precipitation: 15%
-```
-
-Saving with a previously saved target name will overwrite its contents. This can be used to add more targets to an existing group.
-
-```console
-$ brows 'google.com/search?q=weather' '#wob_hm' --save-only humidity
-$ brows weather humidity --save-only weather
+$ brows temperature precipitation humidity --save-only weather
 $ brows weather
 temperature: 27
 precipitation: 15%
@@ -158,7 +153,6 @@ openIssues: 0
 canIBuyItYet: Temporarily out of stock.
 latestKurzgesagt: Could Solar Storms Destroy Civilization? Solar Flares & Coronal Mass Ejections
 titleHtml: <h1>World Wide Web</h1>
-
 ```
 
 By default, brows will only resort to launching a headless browser if it can't find the given selector in the HTML content it receives in the response. This can be overridden using the `--force-browser` option.

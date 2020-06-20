@@ -1,13 +1,13 @@
 import { TargetOptions, RunOptions, Options } from './options';
 
 export const targetOptions: TargetOptions = {
-  save: '',
-  saveOnly: '',
   html: false,
   forceBrowser: false,
 };
 
 export const runOptions: RunOptions = {
+  save: '',
+  saveOnly: '',
   listSaved: false,
   ordered: false,
   verbose: false,

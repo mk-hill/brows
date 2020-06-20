@@ -2,7 +2,7 @@
 
 import meow from 'meow';
 
-import brows, { closeBrowser } from '.';
+import brows, { closeBrowser, Result } from '.';
 import { options as defaults } from './defaults';
 import { highlight, formatResults } from './util';
 
@@ -29,7 +29,7 @@ const cli = meow(
                             their members in the order they were saved
       -v, --verbose         Print additional details about what is being done  
       --help                Display this message
-
+     
     By default, brows will initially make a GET request to the URL and
     attempt to find the selector in the response HTML. If this fails, 
     a headless browser will be used instead.
@@ -38,6 +38,9 @@ const cli = meow(
     (and/or navigate a browser page) to each URL once. 
     All targets in the same URL will be retrieved from the same response 
     data and/or browser page.
+
+    Conventional HTTP_PROXY/HTTPS_PROXY/NO_PROXY environment variables 
+    will be used if they exist.
 `,
   {
     description: 'Retrieve content from the first HTML element matching CSS selector in URL',
@@ -81,9 +84,9 @@ const cli = meow(
 );
 
 brows(...cli.input, cli.flags)
-  .then((results) => {
+  .then((result: Result) => {
     if (cli.flags.ordered) {
-      const message = formatResults(results);
+      const message = formatResults(result);
       if (message.trim()) console.log(message);
     }
     closeBrowser();

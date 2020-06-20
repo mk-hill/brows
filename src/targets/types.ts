@@ -4,11 +4,11 @@ export enum ContentType {
 }
 
 export interface Target {
+  name?: string;
   url: string;
   selector: string;
   contentType: ContentType;
   forceBrowser: boolean;
-  name?: string;
   children?: string[];
 }
 
