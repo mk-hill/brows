@@ -27,51 +27,53 @@ describe('Anonymous targets', () => {
 });
 
 describe('Named targets', () => {
+  beforeAll(async () => {
+    await Promise.all([
+      brows(urls.fetch, h1, { saveOnly: names.fetchText }),
+      brows(urls.fetch, h1, { html: true, saveOnly: names.fetchHtml }),
+      brows(urls.spa, h1, { save: names.spaText }),
+      brows(urls.spa, h1, { html: true, save: names.spaHtml }),
+    ]);
+  });
+
   test('Saves fetch text content target', () =>
-    brows(urls.fetch, h1, { saveOnly: names.fetchText }).then(() =>
-      expect(readTarget(names.fetchText)).resolves.toMatchObject({
-        url: urls.fetch,
-        selector: h1,
-        contentType: ContentType.TEXT_CONTENT,
-      })
-    ));
+    expect(readTarget(names.fetchText)).resolves.toMatchObject({
+      url: urls.fetch,
+      selector: h1,
+      contentType: ContentType.TEXT_CONTENT,
+    }));
 
   test('Fetches text content from saved target', () =>
     expect(brows(names.fetchText)).resolves.toMatchObject({ [names.fetchText]: results.fetchText }));
 
   test('Saves fetch outer HTML target', () =>
-    brows(urls.fetch, h1, { html: true, saveOnly: names.fetchHtml }).then(() =>
-      expect(readTarget(names.fetchHtml)).resolves.toMatchObject({
-        url: urls.fetch,
-        selector: h1,
-        contentType: ContentType.OUTER_HTML,
-      })
-    ));
+    expect(readTarget(names.fetchHtml)).resolves.toMatchObject({
+      url: urls.fetch,
+      selector: h1,
+      contentType: ContentType.OUTER_HTML,
+    }));
+
   test('Fetches outer HTML from saved target', () =>
     expect(brows(names.fetchHtml)).resolves.toMatchObject({ [names.fetchHtml]: results.fetchHtml }));
 
   test('Updates saved SPA text content target to skip fetch attempt', () =>
-    brows(urls.spa, h1, { save: names.spaText }).then(() =>
-      expect(readTarget(names.spaText)).resolves.toMatchObject({
-        url: urls.spa,
-        selector: h1,
-        forceBrowser: true,
-        contentType: ContentType.TEXT_CONTENT,
-      })
-    ));
+    expect(readTarget(names.spaText)).resolves.toMatchObject({
+      url: urls.spa,
+      selector: h1,
+      forceBrowser: true,
+      contentType: ContentType.TEXT_CONTENT,
+    }));
 
   test('Retrieves text content from saved SPA target', () =>
     expect(brows(names.spaText)).resolves.toMatchObject({ [names.spaText]: results.spaText }));
 
   test('Updates saved SPA outer HTML target to skip fetch attempt', () =>
-    brows(urls.spa, h1, { html: true, save: names.spaHtml }).then(() =>
-      expect(readTarget(names.spaHtml)).resolves.toMatchObject({
-        url: urls.spa,
-        selector: h1,
-        contentType: ContentType.OUTER_HTML,
-        forceBrowser: true,
-      })
-    ));
+    expect(readTarget(names.spaHtml)).resolves.toMatchObject({
+      url: urls.spa,
+      selector: h1,
+      contentType: ContentType.OUTER_HTML,
+      forceBrowser: true,
+    }));
 
   test('Retrieves outer HTML from saved SPA target', () =>
     expect(brows(names.spaHtml)).resolves.toMatchObject({ [names.spaHtml]: results.spaHtml }));
@@ -83,67 +85,69 @@ describe('Named targets', () => {
       [names.spaText]: results.spaText,
       [names.spaHtml]: results.spaHtml,
     }));
-});
 
-describe('Parent Targets', () => {
-  test('Saves multiple text content targets under one parent', () =>
-    brows(names.fetchText, names.spaText, { saveOnly: names.textParent }).then(() =>
-      expect(readTarget(names.textParent)).resolves.toMatchObject({
-        children: [names.fetchText, names.spaText],
-      })
-    ));
+  describe('Groups', () => {
+    beforeAll(async () => {
+      await Promise.all([
+        brows(names.fetchText, names.spaText, { saveOnly: names.textGroup }),
+        brows(names.fetchHtml, names.spaHtml, { saveOnly: names.htmlGroup }),
+        brows(names.fetchText, names.fetchHtml, { saveOnly: names.fetchGroup }),
+      ]);
+      await Promise.all([
+        brows(names.textGroup, names.htmlGroup, { saveOnly: names.combinedGroups }),
+        brows(names.textGroup, names.htmlGroup, names.fetchGroup, { saveOnly: names.overlappingGroups }),
+      ]);
+    });
 
-  test('Retrieves multiple text contents from single parent', () =>
-    expect(brows(names.textParent)).resolves.toMatchObject({
-      [names.fetchText]: results.fetchText,
-      [names.spaText]: results.spaText,
-    }));
+    test('Saves multiple text content targets under one group', () =>
+      expect(readTarget(names.textGroup)).resolves.toMatchObject({
+        members: [names.fetchText, names.spaText],
+      }));
 
-  test('Saves multiple outer html targets under one parent', () =>
-    brows(names.fetchHtml, names.spaHtml, { saveOnly: names.htmlParent }).then(() =>
-      expect(readTarget(names.htmlParent)).resolves.toMatchObject({
-        children: [names.fetchHtml, names.spaHtml],
-      })
-    ));
+    test('Retrieves multiple text contents from single group', () =>
+      expect(brows(names.textGroup)).resolves.toMatchObject({
+        [names.fetchText]: results.fetchText,
+        [names.spaText]: results.spaText,
+      }));
 
-  test('Retrieves multiple outer html results from single saved parent', () =>
-    expect(brows(names.htmlParent)).resolves.toMatchObject({
-      [names.fetchHtml]: results.fetchHtml,
-      [names.spaHtml]: results.spaHtml,
-    }));
+    test('Saves multiple outer html targets under one group', () =>
+      expect(readTarget(names.htmlGroup)).resolves.toMatchObject({
+        members: [names.fetchHtml, names.spaHtml],
+      }));
 
-  test('Saves different content types under one parent', () =>
-    brows(names.fetchText, names.fetchHtml, { saveOnly: names.fetchParent }).then(() =>
-      expect(readTarget(names.fetchParent)).resolves.toMatchObject({
-        children: [names.fetchText, names.fetchHtml],
-      })
-    ));
+    test('Retrieves multiple outer html results from single saved group', () =>
+      expect(brows(names.htmlGroup)).resolves.toMatchObject({
+        [names.fetchHtml]: results.fetchHtml,
+        [names.spaHtml]: results.spaHtml,
+      }));
 
-  test('Retrieves different content types from single saved parent', () =>
-    expect(brows(names.fetchParent)).resolves.toMatchObject({
-      [names.fetchText]: results.fetchText,
-      [names.fetchHtml]: results.fetchHtml,
-    }));
+    test('Saves different content types under one group', () =>
+      expect(readTarget(names.fetchGroup)).resolves.toMatchObject({
+        members: [names.fetchText, names.fetchHtml],
+      }));
 
-  test('Saves combined parents under new parent', () =>
-    brows(names.textParent, names.htmlParent, { saveOnly: names.combinedParents }).then(async () =>
-      expect(readTarget(names.combinedParents)).resolves.toMatchObject({
-        children: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
-      })
-    ));
+    test('Retrieves different content types from single saved group', () =>
+      expect(brows(names.fetchGroup)).resolves.toMatchObject({
+        [names.fetchText]: results.fetchText,
+        [names.fetchHtml]: results.fetchHtml,
+      }));
 
-  test('Retrieves all content from saved combined parent', () =>
-    expect(brows(names.combinedParents)).resolves.toMatchObject({
-      [names.fetchText]: results.fetchText,
-      [names.fetchHtml]: results.fetchHtml,
-      [names.spaText]: results.spaText,
-      [names.spaHtml]: results.spaHtml,
-    }));
+    test('Saves combined groups under new group', () =>
+      expect(readTarget(names.combinedGroups)).resolves.toMatchObject({
+        members: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
+      }));
 
-  test('Does not save duplicates when saving overlapping parents', () =>
-    brows(names.textParent, names.htmlParent, names.fetchParent, { saveOnly: names.overlappingParents }).then(async () =>
-      expect(readTarget(names.overlappingParents)).resolves.toMatchObject({
-        children: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
-      })
-    ));
+    test('Retrieves all content from saved combined group', () =>
+      expect(brows(names.combinedGroups)).resolves.toMatchObject({
+        [names.fetchText]: results.fetchText,
+        [names.fetchHtml]: results.fetchHtml,
+        [names.spaText]: results.spaText,
+        [names.spaHtml]: results.spaHtml,
+      }));
+
+    test('Does not save duplicates when saving overlapping groups', () =>
+      expect(readTarget(names.overlappingGroups)).resolves.toMatchObject({
+        members: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
+      }));
+  });
 });

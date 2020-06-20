@@ -15,7 +15,7 @@ export type Result = Record<string, string>;
  * Strings can consist of either one url followed by one selector, or any number of saved target names.
  * @param options Optional options object.
  * @returns Promise which resolves to an object with each individual target's name (or 'content' for anonymous targets)
- * mapped to its result. Parent names will not be included in the result.
+ * mapped to its result. Group names will not be included in the result.
  */
 export default async function brows(...args: Input): Promise<Result> {
   const [input, targetOptions, runOptions] = extractOptions(args);

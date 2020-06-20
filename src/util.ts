@@ -16,9 +16,18 @@ export const formatResults = (result: Result): string => {
 };
 
 /**
- * Careful, only adds s for the moment
+ * Careful, only appends 's' for the moment
  */
 export const plural = (s: string, n: number): string => (n > 1 ? `${s}s` : s);
+
+export const splitByFilter = <T>(ar: T[], predicate: (elem: T) => boolean): [T[], T[]] =>
+  ar.reduce(
+    (split, elem) => {
+      split[predicate(elem) ? 0 : 1].push(elem);
+      return split;
+    },
+    [[], []] as [T[], T[]]
+  );
 
 interface Print {
   stdout: (message: string) => void;

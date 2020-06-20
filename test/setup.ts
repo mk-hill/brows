@@ -18,11 +18,11 @@ export const names = {
   fetchHtml: 'fetchHtml',
   spaText: 'spaText',
   spaHtml: 'spaHtml',
-  textParent: 'textParent',
-  htmlParent: 'htmlParent',
-  fetchParent: 'fetchParent',
-  combinedParents: 'combinedParents',
-  overlappingParents: 'overlappingParents',
+  textGroup: 'textGroup',
+  htmlGroup: 'htmlGroup',
+  fetchGroup: 'fetchGroup',
+  combinedGroups: 'combinedGroups',
+  overlappingGroups: 'overlappingGroups',
 };
 
 export const results = {

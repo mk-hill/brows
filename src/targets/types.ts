@@ -9,16 +9,19 @@ export interface Target {
   selector: string;
   contentType: ContentType;
   forceBrowser: boolean;
-  children?: string[];
+  members?: string[];
 }
 
+/**
+ * Named but not necessarily saved yet
+ */
 export interface NamedTarget extends Target {
   name: string;
 }
 
-export interface ParentTarget {
-  children: string[];
+export interface TargetGroup {
+  members: string[];
   name: string;
 }
 
-export const isParent = (target: Target | ParentTarget): target is ParentTarget => !!target.children?.length;
+export const isGroup = (target: Target | TargetGroup): target is TargetGroup => !!target.members?.length;

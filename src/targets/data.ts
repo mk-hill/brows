@@ -2,7 +2,7 @@ import { readdirSync, mkdirSync, existsSync, readFile, writeFile } from 'fs';
 import { promisify } from 'util';
 import path from 'path';
 
-import { Target, NamedTarget, isParent } from './types';
+import { Target, NamedTarget, isGroup } from './types';
 
 export const dataDir = `${path.resolve(__dirname, 'data')}`;
 
@@ -14,9 +14,9 @@ export const readTarget = (name: string): Promise<NamedTarget> =>
 
 const readRecursive = async (name: string): Promise<NamedTarget[]> => {
   const target = await readTarget(name);
-  if (isParent(target)) {
-    const children = await Promise.all(target.children.map(readRecursive));
-    return children.flat();
+  if (isGroup(target)) {
+    const members = await Promise.all(target.members.map(readRecursive));
+    return members.flat();
   }
   return [target];
 };
@@ -30,7 +30,7 @@ export const saveTarget = async (name: string, data: NamedTarget | NamedTarget[]
     return writeTarget(name, { url, selector, contentType, forceBrowser });
   }
 
-  return writeTarget(name, { children: [...new Set(data.map(({ name: childName }) => childName))] });
+  return writeTarget(name, { members: [...new Set(data.map(({ name: memberName }) => memberName))] });
 };
 
 export const updateSavedTarget = (name: string, updates: Partial<Target>): Promise<void> =>
@@ -39,7 +39,7 @@ export const updateSavedTarget = (name: string, updates: Partial<Target>): Promi
 export const loadSavedTargets = async (names: string[]): Promise<NamedTarget[]> => {
   const savedTargets: NamedTarget[][] = await Promise.all(names.map(readRecursive));
 
-  // Don't retrieve duplicate contents if multiple overlapping parents are passed in single run
+  // Don't retrieve duplicate contents if multiple overlapping groups are passed in single run
   const nameToTarget = savedTargets.flat().reduce((map: Record<string, NamedTarget>, target) => {
     if (!map[target.name]) map[target.name] = target;
     return map;
@@ -48,12 +48,15 @@ export const loadSavedTargets = async (names: string[]): Promise<NamedTarget[]> 
   return Object.values(nameToTarget);
 };
 
-export const readSavedTargetNames = (): string[] => {
+let _savedTargetNames: string[];
+export const getSavedTargetNames = (forceRead = false): string[] => {
+  if (!forceRead && _savedTargetNames) return _savedTargetNames;
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir);
     return [];
   }
-  return readdirSync(dataDir)
+  _savedTargetNames = readdirSync(dataDir)
     .filter((fileName) => fileName?.endsWith('.json'))
     .map((fileName) => fileName.slice(0, -5));
+  return _savedTargetNames;
 };
