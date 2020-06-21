@@ -2,19 +2,19 @@ import puppeteer, { Browser, Page } from 'puppeteer';
 import { TimeoutError } from 'puppeteer/Errors';
 
 import { Target } from '../targets';
-import { highlight, printIf } from '../util';
+import { highlight, printIfVerbose } from '../util';
 import { ElementNotFoundError } from './ElementNotFoundError';
-import { RunOptions } from '../options';
+import { GetContentResult } from '.';
 
 let browserPromise: Promise<Browser>;
 const pages: Record<string, Promise<Page>> = {};
 
-export async function getContentFromBrowser(target: Readonly<Target>, { verbose }: Readonly<RunOptions>): Promise<string> {
+const { stdout } = printIfVerbose;
+
+export async function getContentFromBrowser(target: Readonly<Target>): Promise<GetContentResult> {
   const { url, selector, contentType, name } = target;
 
-  const { stdout } = printIf(verbose);
-
-  if (!browserPromise) launchBrowser(verbose);
+  if (!browserPromise) launchBrowser();
 
   const browser = await browserPromise;
 
@@ -44,11 +44,11 @@ export async function getContentFromBrowser(target: Readonly<Target>, { verbose 
 
   stdout(`Found ${title} in browser page`);
 
-  return page.$eval(selector, (element, contentType) => element[contentType] ?? '', contentType);
+  return { name, content: await page.$eval(selector, (element, contentType) => element[contentType] ?? '', contentType) };
 }
 
-export async function launchBrowser(verbose = false): Promise<void> {
-  const { stdout } = printIf(verbose);
+export async function launchBrowser(): Promise<void> {
+  if (browserPromise) return;
   stdout('Launching browser');
   browserPromise = puppeteer
     .launch()

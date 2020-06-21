@@ -2,15 +2,24 @@ import { readdirSync, mkdirSync, existsSync, readFile, writeFile } from 'fs';
 import { promisify } from 'util';
 import path from 'path';
 
-import { Target, NamedTarget, isGroup } from './types';
+import { filterProps } from '../util';
+import { Target, NamedTarget, isGroup, TargetGroup } from './types';
+import defaults from './defaults';
 
-export const dataDir = `${path.resolve(__dirname, 'data')}`;
+export const dataDir = `${path.resolve(__dirname, '../data')}`;
 
 const read = promisify(readFile);
 const write = promisify(writeFile);
 
-export const readTarget = (name: string): Promise<NamedTarget> =>
-  read(`${dataDir}/${name}.json`, 'utf8').then((contents) => JSON.parse(contents) as NamedTarget);
+const knownTargets: Record<string, NamedTarget> = {};
+
+export const readTarget = async (name: string): Promise<NamedTarget> =>
+  knownTargets[name] ??
+  read(`${dataDir}/${name}.json`, 'utf8').then((contents) => {
+    const target = { ...defaults, name, ...JSON.parse(contents) } as NamedTarget;
+    knownTargets[name] = target;
+    return target;
+  });
 
 const readRecursive = async (name: string): Promise<NamedTarget[]> => {
   const target = await readTarget(name);
@@ -21,8 +30,10 @@ const readRecursive = async (name: string): Promise<NamedTarget[]> => {
   return [target];
 };
 
-const writeTarget = (name: string, target: Partial<NamedTarget>) =>
-  write(`${dataDir}/${name}.json`, JSON.stringify({ name, ...target }), 'utf8');
+const writeTarget = async (name: string, target: Target | Pick<TargetGroup, 'members'>) => {
+  knownTargets[name] = { name, ...target } as NamedTarget;
+  return write(`${dataDir}/${name}.json`, JSON.stringify(filterProps(target, ([key, value]) => value !== defaults[key])), 'utf8');
+};
 
 export const saveTarget = async (name: string, data: NamedTarget | NamedTarget[]): Promise<void> => {
   if ((Array.isArray(data) && data.length === 1) || !Array.isArray(data)) {
@@ -45,18 +56,19 @@ export const loadSavedTargets = async (names: string[]): Promise<NamedTarget[]> 
     return map;
   }, {});
 
-  return Object.values(nameToTarget);
+  const uniqueTargets = Object.values(nameToTarget);
+
+  uniqueTargets.forEach((target) => (knownTargets[target.name] = target));
+
+  return uniqueTargets;
 };
 
-let _savedTargetNames: string[];
-export const getSavedTargetNames = (forceRead = false): string[] => {
-  if (!forceRead && _savedTargetNames) return _savedTargetNames;
+export const readSavedTargetNames = (): string[] => {
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir);
     return [];
   }
-  _savedTargetNames = readdirSync(dataDir)
+  return readdirSync(dataDir)
     .filter((fileName) => fileName?.endsWith('.json'))
     .map((fileName) => fileName.slice(0, -5));
-  return _savedTargetNames;
 };

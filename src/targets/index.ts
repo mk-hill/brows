@@ -1,38 +1,25 @@
 import { TargetOptions, RunOptions } from '../options';
-import { formatUrl, highlight, printIf, plural, splitByFilter } from '../util';
+import { formatUrl, highlight, printIfVerbose, plural, splitByFilter } from '../util';
 
-import { getSavedTargetNames, readTarget, loadSavedTargets, saveTarget } from './data';
+import { readSavedTargetNames, readTarget, loadSavedTargets, saveTarget } from './data';
 import { NamedTarget, Target, ContentType } from './types';
 
 export { readTarget, updateSavedTarget, dataDir } from './data';
 export { Target, ContentType } from './types';
 
+const { stdout, stderr } = printIfVerbose;
+
 export async function buildTargets(input: string[], targetOptions: TargetOptions, runOptions: RunOptions): Promise<Target[]> {
-  const savedNames = getSavedTargetNames();
+  const savedTargetNames = readSavedTargetNames();
 
-  const { listSaved, verbose, save, saveOnly } = runOptions;
-
-  if (listSaved) {
-    const listPromise = Promise.all(savedNames.sort().map(readTarget)).then(printTargets);
-    if (!input.length) {
-      await listPromise;
-      return []; // Allow listSaved call with no input
-    }
-  }
-
-  if (!input.length) {
-    throw new Error('No input');
-  }
-
+  const { save, saveOnly } = runOptions;
   const { html, forceBrowser } = targetOptions;
   const name = save || saveOnly;
   const contentType = html ? ContentType.OUTER_HTML : ContentType.TEXT_CONTENT;
 
-  const { stdout, stderr } = printIf(verbose);
-
   let targets: Target[];
 
-  const [foundNames, rest] = splitByFilter(input, (param) => savedNames.includes(param));
+  const [foundNames, rest] = splitByFilter(input, (param) => savedTargetNames.includes(param));
   if (foundNames.length) {
     if (rest.length) {
       const [found, unknown] = [foundNames, rest].map((ar) => ar.map(highlight).join(', '));
@@ -60,14 +47,6 @@ export async function buildTargets(input: string[], targetOptions: TargetOptions
     targets = [{ name, url, selector, contentType, forceBrowser }];
   }
 
-  if (name) {
-    const savePromise = saveTarget(name, targets as NamedTarget[]).then(() => stdout(`Saved ${highlight(name)} target`));
-    if (saveOnly) {
-      await savePromise;
-      return [];
-    }
-  }
-
   return targets;
 }
 
@@ -82,3 +61,11 @@ function printTargets(targets: NamedTarget[]) {
   });
   console.log(formattedTargets.join('\n'));
 }
+
+export const listSavedTargets = (): Promise<void> => {
+  console.log('listing');
+  return Promise.all(readSavedTargetNames().sort().map(readTarget)).then(printTargets);
+};
+
+export const saveCurrentTargets = (name: string, targets: NamedTarget[]): Promise<void> =>
+  saveTarget(name, targets).then(() => stdout(`Saved ${highlight(name)} target`));

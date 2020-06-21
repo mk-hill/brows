@@ -1,8 +1,10 @@
 import * as defaults from './defaults';
-import { getContent, launchBrowser } from './getContent';
+import { getContent, launchBrowser, GetContentResult } from './getContent';
 import { extractOptions, Options } from './options';
-import { buildTargets } from './targets';
+import { buildTargets, listSavedTargets, saveCurrentTargets } from './targets';
 import { formatSingleResult } from './util';
+import state, { init } from './state';
+import { NamedTarget } from './targets/types';
 
 export { launchBrowser, closeBrowser } from './getContent';
 
@@ -19,24 +21,37 @@ export type Result = Record<string, string>;
  */
 export default async function brows(...args: Input): Promise<Result> {
   const [input, targetOptions, runOptions] = extractOptions(args);
-  const { verbose, ordered } = runOptions;
+  const { listSaved, save, saveOnly } = init(runOptions);
+  const ongoing: Promise<void>[] = [];
 
-  const targets = await buildTargets(input, targetOptions, runOptions);
+  if (listSaved) ongoing.push(listSavedTargets());
 
-  // Launch browser in advance if any targets are known to require it
-  if (targets.some(({ forceBrowser }) => forceBrowser)) {
-    launchBrowser(verbose);
+  let results: GetContentResult[] = [];
+
+  if (input.length) {
+    const targets = await buildTargets(input, targetOptions, runOptions);
+    // Launch browser in advance if any targets are known to require it
+    if (targets.some(({ forceBrowser }) => forceBrowser)) launchBrowser();
+
+    const name = save || saveOnly;
+    if (name) ongoing.push(saveCurrentTargets(name, targets as NamedTarget[]));
+
+    results = await Promise.all(
+      targets.map((target) => getContent(target).then((result) => printIfAsyncAllowed(result, targets.length > 1)))
+    );
+  } else if (state.isInputRequired) {
+    throw new Error('No input');
   }
 
-  const results = await Promise.all(
-    targets.map(async (target) => ({
-      name: target.name,
-      content: await getContent(target, runOptions).then((content) => {
-        if (!ordered) console.log(formatSingleResult(target.name, content, targets.length > 1));
-        return content;
-      }),
-    }))
-  );
+  await Promise.allSettled(ongoing);
 
   return results.reduce((result, { name, content }) => ({ ...result, [name || defaults.targetName]: content }), {});
+}
+
+function printIfAsyncAllowed(result: GetContentResult, includeName: boolean) {
+  if (!state.orderedPrint) {
+    const { name, content } = result;
+    console.log(formatSingleResult(name, content, includeName));
+  }
+  return result;
 }

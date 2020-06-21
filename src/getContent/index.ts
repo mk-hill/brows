@@ -2,24 +2,30 @@ import { getContentFromResponse } from './request';
 import { getContentFromBrowser } from './browser';
 import { Target, updateSavedTarget } from '../targets';
 import { ElementNotFoundError } from './ElementNotFoundError';
-import { highlight, printIf } from '../util';
-import { RunOptions } from '../options';
+import { highlight, printIfVerbose } from '../util';
 
 export { launchBrowser, closeBrowser } from './browser';
 
-export async function getContent(target: Target, options: Readonly<RunOptions>): Promise<string> {
+export interface GetContentResult {
+  name?: string;
+  content: string;
+}
+
+export async function getContent(target: Target): Promise<GetContentResult> {
   const { name, url, forceBrowser } = target;
-  const { stdout, stderr } = printIf(options.verbose);
+  const { stdout, stderr } = printIfVerbose;
 
   const title = highlight(name || url);
 
   if (!forceBrowser) {
     try {
-      return await getContentFromResponse(target, options);
+      return await getContentFromResponse(target);
     } catch (error) {
       const message =
-        error instanceof ElementNotFoundError ? `Element not found in` : `Received error "${error.message}" while requesting`;
-      stderr(`${message} ${title} response data, using browser`);
+        error instanceof ElementNotFoundError
+          ? `Element not found in`
+          : `Received error "${error.message}" while attempting to retrieve`;
+      stderr(`${message} ${title} response, using browser`);
 
       if (name && !forceBrowser) {
         updateSavedTarget(name, { forceBrowser: true }).then(() =>
@@ -32,5 +38,5 @@ export async function getContent(target: Target, options: Readonly<RunOptions>):
   }
 
   stdout(`Retrieving ${title} content from browser`);
-  return getContentFromBrowser(target, options);
+  return getContentFromBrowser(target);
 }

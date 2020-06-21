@@ -2,15 +2,16 @@ import axios from 'axios';
 import { JSDOM } from 'jsdom';
 
 import { Target } from '../targets';
-import { printIf, highlight } from '../util';
+import { printIfVerbose, highlight } from '../util';
+
 import { ElementNotFoundError } from './ElementNotFoundError';
-import { RunOptions } from '../options';
+import { GetContentResult } from '.';
 
 const documents: Record<string, Promise<Document>> = {};
 
-export async function getContentFromResponse(target: Readonly<Target>, { verbose }: Readonly<RunOptions>): Promise<string> {
+export async function getContentFromResponse(target: Readonly<Target>): Promise<GetContentResult> {
   const { url, selector, contentType, name } = target;
-  const { stdout } = printIf(verbose);
+  const { stdout } = printIfVerbose;
 
   const title = highlight(name || selector);
 
@@ -37,5 +38,5 @@ export async function getContentFromResponse(target: Readonly<Target>, { verbose
     stdout(`Found ${title} in ${name ? '' : highlight(url) + ' '}response data`);
   }
 
-  return element[contentType] ?? '';
+  return { name, content: element[contentType] ?? '' };
 }
