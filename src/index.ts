@@ -30,11 +30,13 @@ export default async function brows(...args: Input): Promise<Result> {
 
   if (input.length) {
     const targets = await buildTargets(input, targetOptions, runOptions);
-    // Launch browser in advance if any targets are known to require it
-    if (targets.some(({ forceBrowser }) => forceBrowser)) launchBrowser();
 
     const name = save || saveOnly;
     if (name) ongoing.push(saveCurrentTargets(name, targets as NamedTarget[]));
+    if (saveOnly) return {};
+
+    // Launch browser in advance if any targets are known to require it
+    if (targets.some(({ forceBrowser }) => forceBrowser)) launchBrowser();
 
     results = await Promise.all(
       targets.map((target) => getContent(target).then((result) => printIfAsyncAllowed(result, targets.length > 1)))

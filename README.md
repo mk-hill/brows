@@ -2,55 +2,57 @@
 
 An easy to use application for consuming text content from any website in the command line. Uses CSS selectors to retrieve content.
 
+## Contents
+
+- [Contents](#contents)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Examples](#examples)
+  - [Basic usage](#basic-usage)
+  - [Saving targets](#saving-targets)
+  - [Saving groups](#saving-groups)
+  - [Other](#other)
+- [Additional Details](#additional-details)
+
+## Features
+
+- [Saves targets](#saving-targets) and [groups of targets](#saving-groups) for easy access
+- Automatically uses a [headless browser](#additional-details) if necessary
+- Retrieves content from [any number of saved targets](#saving-groups) at a time
+- Handles targets asynchronously
+- Doesn't make more requests (or open more browser pages) than it [needs to](#additional-details)
+- Conventional [environment variables](#additional-details) take care of proxy if needed
+
 ## Installation
 
 ```console
-$ npm install -g brows
+npm install -g brows
 ```
 
 ## Usage
 
+brows can either be used with one URL followed by one selector, or any number of saved target names.
+
 ```console
-$ brows --help
-
-Retrieve content from the first HTML element matching CSS selector in URL
-
-Usage
-  $ brows [options] <url> <selector>
-  $ brows [options] <name> [<name> ...]
-
-Options
-  -s, --save <name>     Save target for future use with given name
-                        multiple saved names can be used at a time,
-                        and grouped under a different name
-  --save-only <name>    Save target and exit without retrieving content
-  -l, --list-saved      List saved targets in alphabetical order
-                        can be used without input to only list and exit
-  -h, --html            Retrieve outer HTML instead of text content
-                        content type will be saved if save option is used
-  -f, --force-browser   Prevent GET request and force browser launch
-                        will be updated automatically on saved targets if
-                        initial attempt fails, can also be saved manually
-  -o, --ordered         Wait for all content and print results in the
-                        order they were passed. groups will expand to
-                        their members in the order they were saved
-  -v, --verbose         Print additional details about what is being done
-  --help                Display this message
-
-By default, brows will initially make a GET request to the URL and
-attempt to find the selector in the response HTML. If this fails,
-a headless browser will be used instead.
-
-When multiple saved names are passed, brows will only make a request
-(and/or navigate a browser page) to each URL once.
-All targets in the same URL will be retrieved from the same response
-data and/or browser page.
-
-Conventional HTTP_PROXY/HTTPS_PROXY/NO_PROXY environment variables
-will be used if they exist.
+brows [options] <url> <selector>
+brows [options] <name> [<name> ...]
 ```
 
+| Option               | Alias | Description                                              |
+| -------------------- | ----- | -------------------------------------------------------- |
+| `--save <name>`      | `-s`  | Save target or group for future use with given name      |
+| `--save-only <name>` |       | Save target or group and exit without retrieving content |
+| `--list-saved`       | `-l`  | List saved targets and groups in alphabetical order      |
+| `--html`             | `-h`  | Retrieve outer HTML instead of text content              |
+| `--force-browser`    | `-f`  | Prevent request attempt and force browser launch         |
+| `--ordered`          | `-o`  | Print results in the order their targets were passed     |
+| `--verbose`          | `-v`  | Print information about about what is being done         |
+| `--help`             |       | Print a detailed explanation of usage and options        |
+
 ## Examples
+
+### Basic usage
 
 By default, brows will retrieve the matching element's text content.
 
@@ -66,7 +68,9 @@ $ brows -h info.cern.ch/hypertext/WWW/TheProject.html h1
 <h1>World Wide Web</h1>
 ```
 
-Targets can be saved with a given name using `---save` or `--save-only`.
+### Saving targets
+
+Targets can be saved with a given name using `---save` or `--save-only`. Content preferences are saved as well.
 
 ```console
 $ brows --save-only latestKurzgesagt 'youtube.com/user/Kurzgesagt/videos?sort=dd' '#video-title'
@@ -104,6 +108,8 @@ temperature: 27
 precipitation: 15%
 humidity: 58%
 ```
+
+### Saving groups
 
 Multiple saved targets can also be grouped under a different name.
 
@@ -150,13 +156,29 @@ precipitation: 15%
 humidity: 58%
 lastBuild: #16 passed
 openIssues: 0
-canIBuyItYet: Temporarily out of stock.
+availability: Temporarily out of stock.
 latestKurzgesagt: Could Solar Storms Destroy Civilization? Solar Flares & Coronal Mass Ejections
 titleHtml: <h1>World Wide Web</h1>
 ```
+
+### Other
 
 By default, brows will only resort to launching a headless browser if it can't find the given selector in the HTML content it receives in the response. This can be overridden using the `--force-browser` option.
 
 ```console
 $ brows my-single-page-app.com html -h --force-browser > spa.html
 ```
+
+## Additional Details
+
+By default, brows will initially make a GET request to the URL and attempt to find the selector in the response HTML. If this fails, a headless browser will be used instead.
+
+If a saved target isn't found in the response data on the first attempt, it will be automatically updated to skip the unnecessary request in the future and directly launch the browser.
+
+When multiple saved names are passed, brows will only make a request
+(and/or navigate a browser page) to each URL once.
+All targets in the same URL will be retrieved from the same response
+data and/or browser page.
+
+Conventional `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` environment variables
+will be used if they exist.

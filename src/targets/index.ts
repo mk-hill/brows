@@ -62,10 +62,7 @@ function printTargets(targets: NamedTarget[]) {
   console.log(formattedTargets.join('\n'));
 }
 
-export const listSavedTargets = (): Promise<void> => {
-  console.log('listing');
-  return Promise.all(readSavedTargetNames().sort().map(readTarget)).then(printTargets);
-};
+export const listSavedTargets = (): Promise<void> => Promise.all(readSavedTargetNames().sort().map(readTarget)).then(printTargets);
 
 export const saveCurrentTargets = (name: string, targets: NamedTarget[]): Promise<void> =>
   saveTarget(name, targets).then(() => stdout(`Saved ${highlight(name)} target`));
