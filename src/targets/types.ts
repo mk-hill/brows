@@ -24,4 +24,31 @@ export interface TargetGroup {
   name: string;
 }
 
+export const isValidTargetEntry = ([key, value]: [string, unknown]): boolean => {
+  switch (key) {
+    case 'name':
+    case 'url':
+    case 'selector':
+      return typeof value === 'string';
+    case 'forceBrowser':
+      return typeof value === 'boolean';
+    case 'contentType':
+      return Object.values(ContentType).includes(value as ContentType);
+    case 'members':
+      return Array.isArray(value) && value.every((member) => typeof member === 'string');
+    default:
+      return false;
+  }
+};
+
 export const isGroup = (target: Target | TargetGroup): target is TargetGroup => !!target.members?.length;
+
+export const isValidGroupEntry = ([name, members]: [string, unknown]): boolean => {
+  return (
+    !!name &&
+    typeof name === 'string' &&
+    !!members &&
+    Array.isArray(members) &&
+    members.every((member) => typeof member === 'string')
+  );
+};

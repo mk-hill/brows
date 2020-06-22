@@ -16,6 +16,8 @@ export interface RunOptions {
   save: string;
   saveOnly: string;
   listSaved: boolean;
+  export: string;
+  import: string;
   ordered: boolean;
   verbose: boolean;
 }

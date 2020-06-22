@@ -1,3 +1,4 @@
+import { resolve } from 'path';
 import * as defaults from '../src/defaults';
 
 defaults.options.ordered = true;
@@ -30,4 +31,9 @@ export const results = {
   fetchHtml: `<h1>World Wide Web</h1>`,
   spaText: 'todos',
   spaHtml: `<h1 data-reactid=".0.0.0">todos</h1>`,
+};
+
+export const paths = {
+  exportRelative: 'testExport1.yml',
+  exportAbsolute: resolve(process.cwd(), 'testExport2.yml'),
 };

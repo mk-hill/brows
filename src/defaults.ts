@@ -9,6 +9,8 @@ export const runOptions: RunOptions = {
   save: '',
   saveOnly: '',
   listSaved: false,
+  export: '',
+  import: '',
   ordered: false,
   verbose: false,
 };

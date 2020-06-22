@@ -1,15 +1,20 @@
-import { readdirSync, mkdirSync, existsSync, readFile, writeFile } from 'fs';
+import { readdirSync, mkdirSync, existsSync, readFile, writeFile, rmdir } from 'fs';
 import { promisify } from 'util';
 import path from 'path';
 
-import { filterProps } from '../util';
-import { Target, NamedTarget, isGroup, TargetGroup } from './types';
+import { filterProps, printIfVerbose, highlight } from '../util';
+
 import defaults from './defaults';
+import ExportData from './ExportData';
+import { Target, NamedTarget, isGroup, TargetGroup } from './types';
 
 export const dataDir = `${path.resolve(__dirname, '../data')}`;
 
 const read = promisify(readFile);
 const write = promisify(writeFile);
+const rmDir = promisify(rmdir);
+
+const { stdout } = printIfVerbose;
 
 const knownTargets: Record<string, NamedTarget> = {};
 
@@ -32,7 +37,8 @@ const readRecursive = async (name: string): Promise<NamedTarget[]> => {
 
 const writeTarget = async (name: string, target: Target | Pick<TargetGroup, 'members'>) => {
   knownTargets[name] = { name, ...target } as NamedTarget;
-  return write(`${dataDir}/${name}.json`, JSON.stringify(filterProps(target, ([key, value]) => value !== defaults[key])), 'utf8');
+  await write(`${dataDir}/${name}.json`, JSON.stringify(filterProps(target, ([key, value]) => value !== defaults[key])), 'utf8');
+  stdout(`Saved ${highlight(name)}`);
 };
 
 export const saveTarget = async (name: string, data: NamedTarget | NamedTarget[]): Promise<void> => {
@@ -66,9 +72,65 @@ export const loadSavedTargets = async (names: string[]): Promise<NamedTarget[]> 
 export const readSavedTargetNames = (): string[] => {
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir);
+    stdout(`Created directory ${highlight(dataDir)} for brows data`);
     return [];
   }
+
+  stdout(`Reading saved target and group names from ${highlight(dataDir)}`);
   return readdirSync(dataDir)
     .filter((fileName) => fileName?.endsWith('.json'))
     .map((fileName) => fileName.slice(0, -5));
 };
+
+export const exportAllSaved = async (filePath: string): Promise<void> => {
+  stdout('Loading all saved targets and groups for export');
+  const allSaved = await Promise.all(readSavedTargetNames().map(readTarget));
+
+  if (!allSaved.length) {
+    throw new Error('No saved data to export');
+  }
+
+  stdout(`Exporting ${highlight(allSaved.length)} items`);
+  const exportsYaml = new ExportData(allSaved).toYaml();
+  stdout('Converted data to export format');
+  const targetPath = path.resolve(process.cwd(), filePath);
+
+  if (existsSync(targetPath)) {
+    throw new Error(`${targetPath} already exists, specify desired filename`);
+  }
+
+  stdout(`Saving exports to ${highlight(targetPath)}`);
+  await write(targetPath, exportsYaml, 'utf8');
+  stdout(`${highlight(targetPath)} saved`);
+};
+
+export const importAllFromFile = async (filePath: string): Promise<void> => {
+  const targetPath = path.resolve(process.cwd(), filePath);
+  stdout(`Importing from ${highlight(targetPath)}`);
+  const contents = await read(targetPath, 'utf8');
+  stdout(`Read file contents`);
+  const [targets, groups] = new ExportData(contents, targetPath.endsWith('.json')).toInternalData();
+  stdout(`Found ${highlight(targets.length)} targets and ${highlight(groups.length)} groups in file, saving data`);
+
+  const existingNames = readSavedTargetNames();
+  const filesToBeOverwritten = [...targets, ...groups].map(({ name }) => name).filter((name) => existingNames.includes(name));
+
+  if (filesToBeOverwritten.length) {
+    const names = filesToBeOverwritten.map(highlight).join(', ');
+    const message =
+      `${highlight(filesToBeOverwritten.length)} names match existing ones and would be overwritten: ${names}` +
+      '\n' +
+      'Aborting import. Future versions will most likely have prompts for this kind of thing.' +
+      '\n' +
+      `For now, you can manually delete files from ${highlight(dataDir)} or rename imports`;
+    throw new Error(message);
+  } else {
+    stdout(`No overlap with existing data found`);
+  }
+  const savingTargets = targets.map((target) => saveTarget(target.name, target));
+  const savingGroups = groups.map(({ name, members }) => writeTarget(name, { members }));
+  await Promise.all([...savingTargets, ...savingGroups]);
+  stdout('Import complete');
+};
+
+export const deleteAllData = (): Promise<void> => rmDir(dataDir, { recursive: true });

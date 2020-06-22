@@ -17,9 +17,12 @@ export const formatResults = (result: Result): string => {
 };
 
 /**
- * Careful, only appends 's' for the moment
+ * Careful, only appends 's' and handles '-y' -> '-ies' for the moment
  */
-export const plural = (s: string, n: number): string => (n > 1 ? `${s}s` : s);
+export const plural = (s: string, n: number): string => {
+  if (n === 1) return s;
+  return s.endsWith('y') ? `${s.slice(0, -1)}ies` : `${s}s`;
+};
 
 export const typedKeys = <T>(obj: T): Array<keyof T> => Object.keys(obj) as Array<keyof T>;
 

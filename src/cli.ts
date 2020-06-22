@@ -15,26 +15,33 @@ const cli = meow(
       $ brows [options] <name> [<name> ...] 
     
     ${highlight('Options')}
-      -s, --save <name>     Save target or group for future use with given name
-      --save-only <name>    Save target or group and exit without retrieving content 
-      -l, --list-saved      List saved targets and groups in alphabetical order
-      -h, --html            Retrieve target's outer HTML instead of its text content
-      -f, --force-browser   Prevent request attempt and force browser launch
-      -o, --ordered         Print results in the order their targets were passed
-      -v, --verbose         Print information about about what is being done  
-      --help                Display this message
+      -s, --save <name>       Save target or group for future use with given name
+      --save-only <name>      Save target or group and exit without retrieving content 
+      -h, --html              Retrieve target's outer HTML instead of its text content
+      -f, --force-browser     Prevent request attempt and force browser launch
+      -l, --list-saved        Print a list of all saved targets and groups
+      -i, --import <source>   Import targets and groups from source file  
+      -e, --export <target>   Export all saved targets and groups to target file
+      -o, --ordered           Print results in the order their targets were passed
+      -v, --verbose           Print information about about what is being done  
+      --help                  Display this message
 
-      --list-saved can be used without any other input to only perform its task and exit 
-      without retrieving any content.
+      --list-saved, --import, and --export can be used without any other input to only 
+      perform their task and exit without retrieving any content.
         
     ${highlight('Saving Targets')}
       Content type and browser preferences are saved with each individual target.
       Multiple saved target names can be used at a time, and grouped under a different name.
     
     ${highlight('Groups')}
-      When saving multiple groups under one new group or retrieving content from multiple 
-      groups, each child group will expand to its members in the order they were saved. 
-      Any duplicate targets will be ignored.
+      Saving multiple targets with a new name will create a group. Groups are essentially
+      aliases which expand to their member targets in the order they were passed when saving.
+      When saving or retrieving content from multiple overlapping groups, each target is
+      only used once. No duplicates will be retrieved or saved under the new combined group.
+
+    ${highlight('Import/Export')}
+      brows uses YAML for imports and exports by default. Importing JSON files with the
+      same structure is also allowed. Path to source/target file can be relative or absolute.
 
     ${highlight('Details')}
       By default, brows will initially make a GET request to the URL and attempt to find the 
@@ -53,7 +60,7 @@ const cli = meow(
 
       Conventional HTTP_PROXY/HTTPS_PROXY/NO_PROXY environment variables are used if available.
 
-      See README for examples: https://github.com/mk-hill/brows#readme
+      See README for examples and further details: https://github.com/mk-hill/brows#readme
 `,
   {
     description: 'Retrieve content from the first HTML element matching CSS selector in URL for each target',
@@ -81,6 +88,14 @@ const cli = meow(
         type: 'boolean',
         alias: 'f',
         default: defaults.forceBrowser,
+      },
+      export: {
+        type: 'string',
+        alias: 'e',
+      },
+      import: {
+        type: 'string',
+        alias: 'i',
       },
       ordered: {
         type: 'boolean',

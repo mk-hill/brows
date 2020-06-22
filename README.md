@@ -12,14 +12,17 @@ An easy to use application for consuming text content from any website in the co
   - [Basic usage](#basic-usage)
   - [Saving targets](#saving-targets)
   - [Saving groups](#saving-groups)
+  - [Importing and exporting](#importing-and-exporting)
   - [Other](#other)
 - [Additional Details](#additional-details)
 
 ## Features
 
+- Sensible defaults
 - [Saves targets](#saving-targets) and [groups of targets](#saving-groups) for easy access
-- Automatically uses a [headless browser](#additional-details) if necessary
+- Automatically uses a headless browser [if necessary](#additional-details)
 - Retrieves content from [any number of saved targets](#saving-groups) at a time
+- [Simple import/export](#importing-and-exporting) for quickly saving and transferring many targets
 - Handles targets asynchronously
 - Doesn't make more requests (or open more browser pages) than it [needs to](#additional-details)
 - Conventional [environment variables](#additional-details) take care of proxy if needed
@@ -43,9 +46,11 @@ brows [options] <name> [<name> ...]
 | -------------------- | ----- | -------------------------------------------------------- |
 | `--save <name>`      | `-s`  | Save target or group for future use with given name      |
 | `--save-only <name>` |       | Save target or group and exit without retrieving content |
-| `--list-saved`       | `-l`  | List saved targets and groups in alphabetical order      |
 | `--html`             | `-h`  | Retrieve outer HTML instead of text content              |
 | `--force-browser`    | `-f`  | Prevent request attempt and force browser launch         |
+| `--list-saved`       | `-l`  | Print a list of all saved targets and groups             |
+| `--import <source>`  | `-i`  | Import targets and groups from source file               |
+| `--export <target>`  | `-e`  | Export all saved targets and groups to target file       |
 | `--ordered`          | `-o`  | Print results in the order their targets were passed     |
 | `--verbose`          | `-v`  | Print information about about what is being done         |
 | `--help`             |       | Print a detailed explanation of usage and options        |
@@ -68,9 +73,18 @@ $ brows -h info.cern.ch/hypertext/WWW/TheProject.html h1
 <h1>World Wide Web</h1>
 ```
 
+Options can be placed anywhere.
+
+```console
+$ brows info.cern.ch/hypertext/WWW/TheProject.html h1 -v
+# ...
+Found h1 in http://info.cern.ch/hypertext/WWW/TheProject.html response data
+World Wide Web
+```
+
 ### Saving targets
 
-Targets can be saved with a given name using `---save` or `--save-only`. Content preferences are saved as well.
+Targets can be saved with a given name using `---save` or `--save-only`. Content type preference is saved as well.
 
 ```console
 $ brows --save-only latestKurzgesagt 'youtube.com/user/Kurzgesagt/videos?sort=dd' '#video-title'
@@ -82,31 +96,15 @@ This name can then be used in future executions.
 
 ```console
 $ brows latestKurzgesagt
-Could Solar Storms Destroy Civilization? Solar Flares & Coronal Mass Ejections
-```
-
-Options can be placed anywhere.
-
-```console
-$ brows titleHtml -v
-Loading saved target: titleHtml
-Loaded saved target: titleHtml
-Requesting http://info.cern.ch/hypertext/WWW/TheProject.html content for titleHtml
-Received response from http://info.cern.ch/hypertext/WWW/TheProject.html
-Found titleHtml in response data
-<h1>World Wide Web</h1>
+Who Is Responsible For Climate Change? – Who Needs To Fix It?
 ```
 
 Multiple saved names can be used at a time.
 
 ```console
-$ brows 'google.com/search?q=weather' '#wob_ttm' --save-only temperature
-$ brows 'google.com/search?q=weather' '#wob_pp' --save-only precipitation
-$ brows 'google.com/search?q=weather' '#wob_hm' --save-only humidity
-$ brows temperature precipitation humidity
-temperature: 27
-precipitation: 15%
-humidity: 58%
+$ brows titleHtml latestKurzgesagt
+titleHtml: <h1>World Wide Web</h1>
+latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
 ```
 
 ### Saving groups
@@ -114,11 +112,12 @@ humidity: 58%
 Multiple saved targets can also be grouped under a different name.
 
 ```console
-$ brows temperature precipitation humidity --save-only weather
+$ brows 'google.com/search?q=weather' '#wob_ttm' --save-only temperature
+$ brows 'google.com/search?q=weather' '#wob_pp' --save-only precipitation
+$ brows temperature precipitation --save-only weather
 $ brows weather
-temperature: 27
+temperature: 31
 precipitation: 15%
-humidity: 58%
 ```
 
 It's generally much faster to retrieve all desired content together rather than performing a separate run for each target.
@@ -126,39 +125,116 @@ It's generally much faster to retrieve all desired content together rather than 
 Further grouping saved targets (and groups of targets) makes this easy to do for content you expect to retrieve frequently.
 
 ```console
-$ brows --save-only lastBuild travis-ci.com/github/mk-hill/brows/builds '.row-li [href*="builds"] .label-align'
 $ brows --save-only openIssues github.com/mk-hill/brows 'a[href*="issues"] .Counter'
-$ brows --save-only status lastBuild openIssues
 $ brows --save-only availability amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090 '#availability span'
-$ brows --save-only all weather status availability latestKurzgesagt titleHtml
+$ brows --save-only all weather openIssues availability latestKurzgesagt titleHtml
 ```
 
-Results are printed as they are retrieved by default.
+Results are printed as they are retrieved [by default](#other).
 
 ```console
 $ brows all
 titleHtml: <h1>World Wide Web</h1>
 openIssues: 0
-lastBuild: #16 passed
-temperature: 27
+temperature: 31
 precipitation: 15%
-humidity: 58%
-latestKurzgesagt: Could Solar Storms Destroy Civilization? Solar Flares & Coronal Mass Ejections
+latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
 availability: Temporarily out of stock.
 ```
 
-The `--ordered` option can be used to wait for every target's content to be retrieved and print all of them together in the order they were passed instead.
+### Importing and exporting
+
+`--import` and `--export` use a relative or absolute path to a file.
 
 ```console
-$ brows all -o
-temperature: 27
-precipitation: 15%
-humidity: 58%
-lastBuild: #16 passed
-openIssues: 0
-availability: Temporarily out of stock.
-latestKurzgesagt: Could Solar Storms Destroy Civilization? Solar Flares & Coronal Mass Ejections
-titleHtml: <h1>World Wide Web</h1>
+brows -i example.yaml
+brows -e /absolute/path/to/example2.yml
+```
+
+The import/export format is based around creating, editing, and transferring any number of targets and groups as easily as possible:
+
+- Uses easy to read and quick to type [YAML](https://yaml.org/start.html) format [by default](#additional-details).
+- Targets are grouped under their URLs.
+- Defaults don't need to be entered.
+- If no other options are being entered, each target name can be directly mapped to its corresponding selector.
+- As in the command line, `http://` is automatically prepended to the URL if it doesn't begin with `http://` or `https://`.
+- Groups can be entered as arrays of target names in any valid YAML format.
+
+```
+Targets:
+  example.com:
+    myHeader: h1
+    mySpan: div span.my-span
+  example2.com:
+    myAnchor:
+      contentType: outerHTML
+      selector: a
+Groups:
+  myGroup: [myHeader, mySpan]
+  anotherGroup: [mySpan, myAnchor]
+```
+
+is effectively the same as:
+
+```
+Targets:
+  http://example.com:
+    myHeader:
+      selector: h1
+      contentType: textContent
+      forceBrowser: false
+    mySpan:
+      selector: div span.my-span
+      contentType: textContent
+      forceBrowser: false
+  http://example2.com:
+    myAnchor:
+      selector: a
+      contentType: outerHTML
+      forceBrowser: false
+Groups:
+  myGroup:
+    - myHeader
+    - mySpan
+  anotherGroup:
+    - mySpan
+    - myAnchor
+```
+
+Targets and groups saved in the above examples are exported as:
+
+```
+Targets:
+  amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090:
+    availability: "#availability span"
+  github.com/mk-hill/brows:
+    openIssues: a[href*="issues"] .Counter
+  google.com/search?q=weather:
+    precipitation:
+      forceBrowser: true
+      selector: "#wob_pp"
+    temperature:
+      forceBrowser: true
+      selector: "#wob_ttm"
+  info.cern.ch/hypertext/WWW/TheProject.html:
+    titleHtml:
+      contentType: outerHTML
+      selector: h1
+  youtube.com/user/Kurzgesagt/videos?sort=dd:
+    latestKurzgesagt:
+      forceBrowser: true
+      selector: "#video-title"
+Groups:
+  all:
+    - temperature
+    - precipitation
+    - openIssues
+    - availability
+    - latestKurzgesagt
+    - titleHtml
+  weather:
+    - temperature
+    - precipitation
 ```
 
 ### Other
@@ -169,16 +245,30 @@ By default, brows will only resort to launching a headless browser if it can't f
 $ brows my-single-page-app.com html -h --force-browser > spa.html
 ```
 
+The `--ordered` option can be used to wait for every target's content to be ready and print all of them together in the order they were passed instead of printing each result as it's retrieved.
+
+```console
+$ brows all -o
+temperature: 31
+precipitation: 15%
+openIssues: 0
+availability: In Stock.
+latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
+titleHtml: <h1>World Wide Web</h1>
+```
+
 ## Additional Details
 
-By default, brows will initially make a GET request to the URL and attempt to find the selector in the response HTML. If this fails, a headless browser will be used instead.
-
-If a saved target isn't found in the response data on the first attempt, it will be automatically updated to skip the unnecessary request in the future and directly launch the browser.
-
-When multiple saved names are passed, brows will only make a request
-(and/or navigate a browser page) to each URL once.
-All targets in the same URL will be retrieved from the same response
-data and/or browser page.
-
-Conventional `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` environment variables
-will be used if they exist.
+- By default, brows will initially make a GET request to the URL and attempt to find the selector in the response HTML. If this fails, a headless browser will be used instead.
+- If a saved target isn't found in the response data on the first attempt, it will be automatically updated to skip the unnecessary request in the future and directly launch the browser.
+- When multiple saved names are passed, brows will only make a request
+  (and/or navigate a browser page) to each URL once.
+  All targets in the same URL will be retrieved from the same response
+  data and/or browser page.
+- Saving multiple targets with a new name will create a group. Groups are essentially
+  just aliases which expand to their member targets in the order they were passed when saving.
+- When saving or retrieving content from multiple overlapping groups, each individual target is
+  only used once. No duplicates will be retrieved or saved under the new combined group.
+- Conventional `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` environment variables
+  will be used if they exist.
+- Importing [JSON](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON) files with the same structure as the YAML examples above is also supported without any additional configuration. Just pass a JSON file instead.

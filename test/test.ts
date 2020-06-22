@@ -1,6 +1,9 @@
 import brows from '../src';
 import { readTarget, ContentType } from '../src/targets';
-import { urls, selectors, results, names } from './setup';
+import { urls, selectors, results, names, paths } from './setup';
+import { existsSync } from 'fs';
+import { resolve } from 'path';
+import { deleteAllData } from '../src/targets/data';
 
 const { h1 } = selectors;
 
@@ -85,69 +88,103 @@ describe('Named targets', () => {
       [names.spaText]: results.spaText,
       [names.spaHtml]: results.spaHtml,
     }));
+});
 
-  describe('Groups', () => {
-    beforeAll(async () => {
-      await Promise.all([
-        brows(names.fetchText, names.spaText, { saveOnly: names.textGroup }),
-        brows(names.fetchHtml, names.spaHtml, { saveOnly: names.htmlGroup }),
-        brows(names.fetchText, names.fetchHtml, { saveOnly: names.fetchGroup }),
-      ]);
-      await Promise.all([
-        brows(names.textGroup, names.htmlGroup, { saveOnly: names.combinedGroups }),
-        brows(names.textGroup, names.htmlGroup, names.fetchGroup, { saveOnly: names.overlappingGroups }),
-      ]);
-    });
+describe('Groups', () => {
+  beforeAll(async () => {
+    await Promise.all([
+      brows(names.fetchText, names.spaText, { saveOnly: names.textGroup }),
+      brows(names.fetchHtml, names.spaHtml, { saveOnly: names.htmlGroup }),
+      brows(names.fetchText, names.fetchHtml, { saveOnly: names.fetchGroup }),
+    ]);
+    await Promise.all([
+      brows(names.textGroup, names.htmlGroup, { saveOnly: names.combinedGroups }),
+      brows(names.textGroup, names.htmlGroup, names.fetchGroup, { saveOnly: names.overlappingGroups }),
+    ]);
+  });
 
-    test('Saves multiple text content targets under one group', () =>
-      expect(readTarget(names.textGroup)).resolves.toMatchObject({
-        members: [names.fetchText, names.spaText],
-      }));
+  test('Saves multiple text content targets under one group', () =>
+    expect(readTarget(names.textGroup)).resolves.toMatchObject({
+      members: [names.fetchText, names.spaText],
+    }));
 
-    test('Retrieves multiple text contents from single group', () =>
-      expect(brows(names.textGroup)).resolves.toMatchObject({
-        [names.fetchText]: results.fetchText,
-        [names.spaText]: results.spaText,
-      }));
+  test('Retrieves multiple text contents from single group', () =>
+    expect(brows(names.textGroup)).resolves.toMatchObject({
+      [names.fetchText]: results.fetchText,
+      [names.spaText]: results.spaText,
+    }));
 
-    test('Saves multiple outer html targets under one group', () =>
-      expect(readTarget(names.htmlGroup)).resolves.toMatchObject({
-        members: [names.fetchHtml, names.spaHtml],
-      }));
+  test('Saves multiple outer html targets under one group', () =>
+    expect(readTarget(names.htmlGroup)).resolves.toMatchObject({
+      members: [names.fetchHtml, names.spaHtml],
+    }));
 
-    test('Retrieves multiple outer html results from single saved group', () =>
-      expect(brows(names.htmlGroup)).resolves.toMatchObject({
-        [names.fetchHtml]: results.fetchHtml,
-        [names.spaHtml]: results.spaHtml,
-      }));
+  test('Retrieves multiple outer html results from single saved group', () =>
+    expect(brows(names.htmlGroup)).resolves.toMatchObject({
+      [names.fetchHtml]: results.fetchHtml,
+      [names.spaHtml]: results.spaHtml,
+    }));
 
-    test('Saves different content types under one group', () =>
-      expect(readTarget(names.fetchGroup)).resolves.toMatchObject({
-        members: [names.fetchText, names.fetchHtml],
-      }));
+  test('Saves different content types under one group', () =>
+    expect(readTarget(names.fetchGroup)).resolves.toMatchObject({
+      members: [names.fetchText, names.fetchHtml],
+    }));
 
-    test('Retrieves different content types from single saved group', () =>
-      expect(brows(names.fetchGroup)).resolves.toMatchObject({
-        [names.fetchText]: results.fetchText,
-        [names.fetchHtml]: results.fetchHtml,
-      }));
+  test('Retrieves different content types from single saved group', () =>
+    expect(brows(names.fetchGroup)).resolves.toMatchObject({
+      [names.fetchText]: results.fetchText,
+      [names.fetchHtml]: results.fetchHtml,
+    }));
 
-    test('Saves combined groups under new group', () =>
-      expect(readTarget(names.combinedGroups)).resolves.toMatchObject({
-        members: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
-      }));
+  test('Saves combined groups under new group', () =>
+    expect(readTarget(names.combinedGroups)).resolves.toMatchObject({
+      members: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
+    }));
 
-    test('Retrieves all content from saved combined group', () =>
+  test('Retrieves all content from saved combined group', () =>
+    expect(brows(names.combinedGroups)).resolves.toMatchObject({
+      [names.fetchText]: results.fetchText,
+      [names.fetchHtml]: results.fetchHtml,
+      [names.spaText]: results.spaText,
+      [names.spaHtml]: results.spaHtml,
+    }));
+
+  test('Does not save duplicates when saving overlapping groups', () =>
+    expect(readTarget(names.overlappingGroups)).resolves.toMatchObject({
+      members: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
+    }));
+});
+
+describe('Exports', () => {
+  test('Exports to relative path', () =>
+    brows({ export: paths.exportRelative }).then(() =>
+      expect(existsSync(resolve(process.cwd(), paths.exportRelative))).toBe(true)
+    ));
+
+  test('Exports to absolute path', () =>
+    brows({ export: paths.exportAbsolute }).then(() => expect(existsSync(paths.exportAbsolute)).toBe(true)));
+});
+
+describe('Imports', () => {
+  beforeEach(deleteAllData);
+
+  test('Imports from relative path', () =>
+    brows({ import: paths.exportRelative }).then(() =>
       expect(brows(names.combinedGroups)).resolves.toMatchObject({
         [names.fetchText]: results.fetchText,
         [names.fetchHtml]: results.fetchHtml,
         [names.spaText]: results.spaText,
         [names.spaHtml]: results.spaHtml,
-      }));
+      })
+    ));
 
-    test('Does not save duplicates when saving overlapping groups', () =>
-      expect(readTarget(names.overlappingGroups)).resolves.toMatchObject({
-        members: [names.fetchText, names.spaText, names.fetchHtml, names.spaHtml],
-      }));
-  });
+  test('Imports from absolute path', () =>
+    brows({ import: paths.exportAbsolute }).then(() =>
+      expect(brows(names.combinedGroups)).resolves.toMatchObject({
+        [names.fetchText]: results.fetchText,
+        [names.fetchHtml]: results.fetchHtml,
+        [names.spaText]: results.spaText,
+        [names.spaHtml]: results.spaHtml,
+      })
+    ));
 });

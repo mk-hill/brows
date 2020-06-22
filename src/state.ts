@@ -17,6 +17,6 @@ export default {
   },
 
   get isInputRequired(): boolean {
-    return !options.listSaved;
+    return !(options.listSaved || options.import || options.export);
   },
 };

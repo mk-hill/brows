@@ -1,7 +1,7 @@
 import * as defaults from './defaults';
 import { getContent, launchBrowser, GetContentResult } from './getContent';
 import { extractOptions, Options } from './options';
-import { buildTargets, listSavedTargets, saveCurrentTargets } from './targets';
+import { buildTargets, listSavedTargets, saveTarget, importAllFromFile, exportAllSaved } from './targets';
 import { formatSingleResult } from './util';
 import state, { init } from './state';
 import { NamedTarget } from './targets/types';
@@ -24,7 +24,10 @@ export default async function brows(...args: Input): Promise<Result> {
   const { listSaved, save, saveOnly } = init(runOptions);
   const ongoing: Promise<void>[] = [];
 
+  // TODO list/import/save at start only if not saving
   if (listSaved) ongoing.push(listSavedTargets());
+  if (runOptions.import) ongoing.push(importAllFromFile(runOptions.import));
+  if (runOptions.export) ongoing.push(exportAllSaved(runOptions.export));
 
   let results: GetContentResult[] = [];
 
@@ -32,8 +35,10 @@ export default async function brows(...args: Input): Promise<Result> {
     const targets = await buildTargets(input, targetOptions, runOptions);
 
     const name = save || saveOnly;
-    if (name) ongoing.push(saveCurrentTargets(name, targets as NamedTarget[]));
-    if (saveOnly) return {};
+    if (name) {
+      ongoing.push(saveTarget(name, targets as NamedTarget[]));
+      if (saveOnly) return {};
+    }
 
     // Launch browser in advance if any targets are known to require it
     if (targets.some(({ forceBrowser }) => forceBrowser)) launchBrowser();
@@ -45,7 +50,7 @@ export default async function brows(...args: Input): Promise<Result> {
     throw new Error('No input');
   }
 
-  await Promise.allSettled(ongoing);
+  await Promise.all(ongoing);
 
   return results.reduce((result, { name, content }) => ({ ...result, [name || defaults.targetName]: content }), {});
 }
