@@ -1,10 +1,16 @@
-# brows &middot; [![npm version](https://img.shields.io/npm/v/brows.svg?style=flat-square)](https://www.npmjs.org/package/brows) [![build status](https://img.shields.io/travis/mk-hill/brows/master.svg?style=flat-square)](https://travis-ci.org/mk-hill/brows) [![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/blob/master/LICENSE) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)
+# brows
+
+[![npm version](https://img.shields.io/npm/v/brows.svg?style=flat-square)](https://www.npmjs.org/package/brows)
+[![build status](https://img.shields.io/travis/mk-hill/brows/master.svg?style=flat-square)](https://travis-ci.org/mk-hill/brows)
+[![dependencies](https://img.shields.io/david/mk-hill/brows?style=flat-square)](https://david-dm.org/mk-hill/brows)
+[![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/blob/master/LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/pulls)
+[![language](https://img.shields.io/github/languages/top/mk-hill/brows?style=flat-square)](https://github.com/mk-hill/brows)
 
 An easy to use application for consuming text content from any website in the command line. Uses CSS selectors to retrieve content.
 
 ## Contents
 
-- [Contents](#contents)
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -51,7 +57,7 @@ brows [options] <name> [<name> ...]
 | `--list-saved`       | `-l`  | Print a list of all saved targets and groups             |
 | `--import <source>`  | `-i`  | Import targets and groups from source file               |
 | `--export <target>`  | `-e`  | Export all saved targets and groups to target file       |
-| `--ordered`          | `-o`  | Print results in the order their targets were passed     |
+| `--ordered-print`    | `-o`  | Print results in the order their targets were passed     |
 | `--verbose`          | `-v`  | Print information about about what is being done         |
 | `--help`             |       | Print a detailed explanation of usage and options        |
 
@@ -59,7 +65,7 @@ brows [options] <name> [<name> ...]
 
 ### Basic usage
 
-By default, brows will retrieve the matching element's text content.
+By default, brows will retrieve the first matching HTML element's text content.
 
 ```console
 $ brows info.cern.ch/hypertext/WWW/TheProject.html h1
@@ -160,7 +166,7 @@ The import/export format is based around creating, editing, and transferring any
 - As in the command line, `http://` is automatically prepended to the URL if it doesn't begin with `http://` or `https://`.
 - Groups can be entered as arrays of target names in any valid YAML format.
 
-```
+```yaml
 Targets:
   example.com:
     myHeader: h1
@@ -176,7 +182,7 @@ Groups:
 
 is effectively the same as:
 
-```
+```yaml
 Targets:
   http://example.com:
     myHeader:
@@ -203,19 +209,19 @@ Groups:
 
 Targets and groups saved in the above examples are exported as:
 
-```
+```yaml
 Targets:
   amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090:
-    availability: "#availability span"
+    availability: '#availability span'
   github.com/mk-hill/brows:
     openIssues: a[href*="issues"] .Counter
   google.com/search?q=weather:
     precipitation:
       forceBrowser: true
-      selector: "#wob_pp"
+      selector: '#wob_pp'
     temperature:
       forceBrowser: true
-      selector: "#wob_ttm"
+      selector: '#wob_ttm'
   info.cern.ch/hypertext/WWW/TheProject.html:
     titleHtml:
       contentType: outerHTML
@@ -223,7 +229,7 @@ Targets:
   youtube.com/user/Kurzgesagt/videos?sort=dd:
     latestKurzgesagt:
       forceBrowser: true
-      selector: "#video-title"
+      selector: '#video-title'
 Groups:
   all:
     - temperature

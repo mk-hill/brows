@@ -11,7 +11,7 @@ export const runOptions: RunOptions = {
   listSaved: false,
   export: '',
   import: '',
-  ordered: false,
+  orderedPrint: false,
   verbose: false,
 };
 

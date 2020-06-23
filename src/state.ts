@@ -13,7 +13,7 @@ export default {
   },
 
   get orderedPrint(): boolean {
-    return options.ordered;
+    return options.orderedPrint;
   },
 
   get isInputRequired(): boolean {

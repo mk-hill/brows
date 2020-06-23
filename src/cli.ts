@@ -22,7 +22,7 @@ const cli = meow(
       -l, --list-saved        Print a list of all saved targets and groups
       -i, --import <source>   Import targets and groups from source file  
       -e, --export <target>   Export all saved targets and groups to target file
-      -o, --ordered           Print results in the order their targets were passed
+      -o, --ordered-print     Print results in the order their targets were passed
       -v, --verbose           Print information about about what is being done  
       --help                  Display this message
 
@@ -97,10 +97,15 @@ const cli = meow(
         type: 'string',
         alias: 'i',
       },
-      ordered: {
+      orderedPrint: {
         type: 'boolean',
         alias: 'o',
-        default: defaults.ordered,
+        default: defaults.orderedPrint,
+      },
+      // Renamed to orderedPrint, support until next major version
+      ordered: {
+        type: 'boolean',
+        default: defaults.orderedPrint,
       },
       verbose: {
         type: 'boolean',
@@ -111,17 +116,40 @@ const cli = meow(
   }
 );
 
-brows(...cli.input, cli.flags)
-  .then((result: Result) => {
+export interface Flags {
+  save: string;
+  saveOnly: string;
+  html: boolean;
+  forceBrowser: boolean;
+  listSaved: boolean;
+  import: string;
+  export: string;
+  orderedPrint: boolean;
+  verbose: boolean;
+}
+
+async function run() {
+  try {
+    const { input, flags: cliFlags } = cli;
+    const { ordered, orderedPrint, ...rest } = cliFlags;
+
+    if (ordered) {
+      console.warn(`--ordered has been renamed to --ordered-print. Support will be dropped in a future version.`);
+    }
+
+    const flags: Flags = { orderedPrint: ordered || orderedPrint, ...rest };
+    const result: Result = await brows(...input, flags);
     closeBrowser();
-    if (cli.flags.ordered) {
+    if (flags.orderedPrint) {
       const message = formatResults(result);
       if (message.trim()) console.log(message);
     }
-  })
-  .catch((e) => {
+  } catch (e) {
     const suggestVerbose = `Try repeating the command with the '${highlight('--verbose')}' option to see what's going wrong`;
     const suggestHelp = `or using '${highlight('brows --help')}' for a detailed explanation of usage and options`;
     console.error(`${e.message}\n${suggestVerbose},\n${suggestHelp}.`);
     closeBrowser().then(() => process.exit(1));
-  });
+  }
+}
+
+run();

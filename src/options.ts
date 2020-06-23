@@ -18,7 +18,7 @@ export interface RunOptions {
   listSaved: boolean;
   export: string;
   import: string;
-  ordered: boolean;
+  orderedPrint: boolean;
   verbose: boolean;
 }
 

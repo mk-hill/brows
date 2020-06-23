@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 import * as defaults from '../src/defaults';
 
-defaults.options.ordered = true;
+defaults.options.orderedPrint = true;
 
 export const urls = {
   unformatted: 'info.cern.ch/hypertext/WWW/TheProject.html',
