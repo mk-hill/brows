@@ -1,6 +1,6 @@
 import { getContentFromResponse } from './request';
 import { getContentFromBrowser } from './browser';
-import { Target, updateSavedTarget } from '../targets';
+import { Target, updateSavedTarget, ContentType } from '../targets';
 import { ElementNotFoundError } from './ElementNotFoundError';
 import { highlight, printIfVerbose } from '../util';
 
@@ -8,7 +8,10 @@ export { launchBrowser, closeBrowser } from './browser';
 
 export interface GetContentResult {
   name?: string;
-  content: string;
+  content: string | string[];
+  contentType: ContentType;
+  allMatches: boolean;
+  delim: string;
 }
 
 export async function getContent(target: Target): Promise<GetContentResult> {

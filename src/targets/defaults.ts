@@ -1,12 +1,15 @@
 import { Target, ContentType, NamedTarget } from './types';
 import { typedKeys } from '../util';
+import { targetOptions } from '../defaults';
 
 const targetDefaults: Partial<Target> = {
   name: undefined,
   url: undefined,
   selector: undefined,
   contentType: ContentType.TEXT_CONTENT,
-  forceBrowser: false,
+  allMatches: targetOptions.allMatches,
+  delim: targetOptions.delim,
+  forceBrowser: targetOptions.forceBrowser,
   members: undefined,
 };
 

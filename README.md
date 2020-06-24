@@ -2,10 +2,10 @@
 
 [![npm version](https://img.shields.io/npm/v/brows.svg?style=flat-square)](https://www.npmjs.org/package/brows)
 [![build status](https://img.shields.io/travis/mk-hill/brows/master.svg?style=flat-square)](https://travis-ci.org/mk-hill/brows)
-[![dependencies](https://img.shields.io/david/mk-hill/brows?style=flat-square)](https://david-dm.org/mk-hill/brows)
+[![dependencies](https://img.shields.io/david/mk-hill/brows.svg?style=flat-square)](https://david-dm.org/mk-hill/brows)
 [![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/blob/master/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/pulls)
-[![language](https://img.shields.io/github/languages/top/mk-hill/brows?style=flat-square)](https://github.com/mk-hill/brows)
+[![language](https://img.shields.io/github/languages/top/mk-hill/brows.svg?style=flat-square)](https://github.com/mk-hill/brows)
 
 An easy to use application for consuming text content from any website in the command line. Uses CSS selectors to retrieve content.
 
@@ -48,18 +48,20 @@ brows [options] <url> <selector>
 brows [options] <name> [<name> ...]
 ```
 
-| Option               | Alias | Description                                              |
-| -------------------- | ----- | -------------------------------------------------------- |
-| `--save <name>`      | `-s`  | Save target or group for future use with given name      |
-| `--save-only <name>` |       | Save target or group and exit without retrieving content |
-| `--html`             | `-h`  | Retrieve outer HTML instead of text content              |
-| `--force-browser`    | `-f`  | Prevent request attempt and force browser launch         |
-| `--list-saved`       | `-l`  | Print a list of all saved targets and groups             |
-| `--import <source>`  | `-i`  | Import targets and groups from source file               |
-| `--export <target>`  | `-e`  | Export all saved targets and groups to target file       |
-| `--ordered-print`    | `-o`  | Print results in the order their targets were passed     |
-| `--verbose`          | `-v`  | Print information about about what is being done         |
-| `--help`             |       | Print a detailed explanation of usage and options        |
+| Option               | Alias | Description                                                |
+| -------------------- | ----- | ---------------------------------------------------------- |
+| `--save <name>`      | `-s`  | Save target or group for future use with given name        |
+| `--save-only <name>` |       | Save target or group and exit without retrieving content   |
+| `--html`             | `-h`  | Retrieve outer HTML instead of text content                |
+| `--all-matches`      | `-a`  | Target all matching elements instead of just the first one |
+| `--delim`            | `-d`  | Set delimiter between results for -a, defaults to newline  |
+| `--force-browser`    | `-f`  | Prevent request attempt and force browser launch           |
+| `--list-saved`       | `-l`  | Print a list of all saved targets and groups               |
+| `--import <source>`  | `-i`  | Import targets and groups from source file                 |
+| `--export <target>`  | `-e`  | Export all saved targets and groups to target file         |
+| `--ordered-print`    | `-o`  | Print results in the order their targets were passed       |
+| `--verbose`          | `-v`  | Print information about about what is being done           |
+| `--help`             |       | Print a detailed explanation of usage and options          |
 
 ## Examples
 
@@ -79,6 +81,23 @@ $ brows -h info.cern.ch/hypertext/WWW/TheProject.html h1
 <h1>World Wide Web</h1>
 ```
 
+`--all-matches` will target all elements matching the selector instead of just the first one.
+
+```console
+$ brows -a todomvc.com/examples/react 'ul:first-of-type li'
+Tutorial
+Philosophy
+Support
+Flux architecture example
+```
+
+`--delim` can be used to specify a different delimiter than the default newline.
+
+```console
+$ brows -a -d ', ' todomvc.com/examples/react 'ul:first-of-type li'
+Tutorial, Philosophy, Support, Flux architecture example
+```
+
 Options can be placed anywhere.
 
 ```console
@@ -93,24 +112,24 @@ World Wide Web
 Targets can be saved with a given name using `---save` or `--save-only`. Content type preference is saved as well.
 
 ```console
-$ brows --save-only latestKurzgesagt 'youtube.com/user/Kurzgesagt/videos?sort=dd' '#video-title'
-$ brows -s titleHtml -h info.cern.ch/hypertext/WWW/TheProject.html h1
+$ brows --save-only listItems todomvc.com/examples/react 'ul:first-of-type li' -a -d ', '
+$ brows -s titleHtml info.cern.ch/hypertext/WWW/TheProject.html h1 -h
 <h1>World Wide Web</h1>
 ```
 
 This name can then be used in future executions.
 
 ```console
-$ brows latestKurzgesagt
-Who Is Responsible For Climate Change? – Who Needs To Fix It?
+$ brows listItems
+Tutorial, Philosophy, Support, Flux architecture example
 ```
 
 Multiple saved names can be used at a time.
 
 ```console
-$ brows titleHtml latestKurzgesagt
+$ brows titleHtml listItems
 titleHtml: <h1>World Wide Web</h1>
-latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
+listItems: Tutorial, Philosophy, Support, Flux architecture example
 ```
 
 ### Saving groups
@@ -122,7 +141,7 @@ $ brows 'google.com/search?q=weather' '#wob_ttm' --save-only temperature
 $ brows 'google.com/search?q=weather' '#wob_pp' --save-only precipitation
 $ brows temperature precipitation --save-only weather
 $ brows weather
-temperature: 31
+temperature: 23
 precipitation: 15%
 ```
 
@@ -131,18 +150,18 @@ It's generally much faster to retrieve all desired content together rather than 
 Further grouping saved targets (and groups of targets) makes this easy to do for content you expect to retrieve frequently.
 
 ```console
-$ brows --save-only openIssues github.com/mk-hill/brows 'a[href*="issues"] .Counter'
+$ brows --save-only latestKurzgesagt 'youtube.com/user/Kurzgesagt/videos?sort=dd' '#video-title'
 $ brows --save-only availability amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090 '#availability span'
-$ brows --save-only all weather openIssues availability latestKurzgesagt titleHtml
+$ brows --save-only allExamples weather availability latestKurzgesagt titleHtml listItems
 ```
 
 Results are printed as they are retrieved [by default](#other).
 
 ```console
-$ brows all
+$ brows allExamples
 titleHtml: <h1>World Wide Web</h1>
-openIssues: 0
-temperature: 31
+listItems: Tutorial, Philosophy, Support, Flux architecture example
+temperature: 23
 precipitation: 15%
 latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
 availability: Temporarily out of stock.
@@ -165,6 +184,7 @@ The import/export format is based around creating, editing, and transferring any
 - If no other options are being entered, each target name can be directly mapped to its corresponding selector.
 - As in the command line, `http://` is automatically prepended to the URL if it doesn't begin with `http://` or `https://`.
 - Groups can be entered as arrays of target names in any valid YAML format.
+- You don't need to specify whether a browser is needed except for [niche use cases](#other).
 
 ```yaml
 Targets:
@@ -172,12 +192,13 @@ Targets:
     myHeader: h1
     mySpan: div span.my-span
   example2.com:
-    myAnchor:
-      contentType: outerHTML
+    myAnchors:
       selector: a
+      contentType: outerHTML
+      allMatches: true
 Groups:
   myGroup: [myHeader, mySpan]
-  anotherGroup: [mySpan, myAnchor]
+  anotherGroup: [mySpan, myAnchors]
 ```
 
 is effectively the same as:
@@ -189,22 +210,26 @@ Targets:
       selector: h1
       contentType: textContent
       forceBrowser: false
+      allMatches: false
     mySpan:
       selector: div span.my-span
       contentType: textContent
       forceBrowser: false
+      allMatches: false
   http://example2.com:
-    myAnchor:
+    myAnchors:
       selector: a
       contentType: outerHTML
       forceBrowser: false
+      allMatches: true
+      delim: "\n"
 Groups:
   myGroup:
     - myHeader
     - mySpan
   anotherGroup:
     - mySpan
-    - myAnchor
+    - myAnchors
 ```
 
 Targets and groups saved in the above examples are exported as:
@@ -212,9 +237,9 @@ Targets and groups saved in the above examples are exported as:
 ```yaml
 Targets:
   amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090:
-    availability: '#availability span'
-  github.com/mk-hill/brows:
-    openIssues: a[href*="issues"] .Counter
+    availability:
+      forceBrowser: true
+      selector: '#availability span'
   google.com/search?q=weather:
     precipitation:
       forceBrowser: true
@@ -226,18 +251,24 @@ Targets:
     titleHtml:
       contentType: outerHTML
       selector: h1
+  todomvc.com/examples/react:
+    listItems:
+      allMatches: true
+      delim: ', '
+      forceBrowser: true
+      selector: ul:first-of-type li
   youtube.com/user/Kurzgesagt/videos?sort=dd:
     latestKurzgesagt:
       forceBrowser: true
       selector: '#video-title'
 Groups:
-  all:
+  allExamples:
     - temperature
     - precipitation
-    - openIssues
     - availability
     - latestKurzgesagt
     - titleHtml
+    - listItems
   weather:
     - temperature
     - precipitation
@@ -245,22 +276,22 @@ Groups:
 
 ### Other
 
-By default, brows will only resort to launching a headless browser if it can't find the given selector in the HTML content it receives in the response. This can be overridden using the `--force-browser` option.
+The `--ordered-print` option can be used to wait for every target's content to be ready and print all of them together in the order they were passed instead of printing each result as it's retrieved.
+
+```console
+$ brows allExamples -o
+temperature: 23
+precipitation: 15%
+availability: Temporarily out of stock.
+latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
+titleHtml: <h1>World Wide Web</h1>
+listItems: Tutorial, Philosophy, Support, Flux architecture example
+```
+
+Browser requirements are [handled automatically](#additional-details) for the vast majority of use cases. The `--force-browser` option will override defaults if needed.
 
 ```console
 $ brows my-single-page-app.com html -h --force-browser > spa.html
-```
-
-The `--ordered` option can be used to wait for every target's content to be ready and print all of them together in the order they were passed instead of printing each result as it's retrieved.
-
-```console
-$ brows all -o
-temperature: 31
-precipitation: 15%
-openIssues: 0
-availability: In Stock.
-latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
-titleHtml: <h1>World Wide Web</h1>
 ```
 
 ## Additional Details

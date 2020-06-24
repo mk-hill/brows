@@ -6,6 +6,8 @@ import { Input } from '.';
  */
 export interface TargetOptions {
   html: boolean;
+  allMatches: boolean;
+  delim: string;
   forceBrowser: boolean;
 }
 

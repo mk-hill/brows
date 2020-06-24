@@ -43,8 +43,8 @@ const writeTarget = async (name: string, target: Target | Pick<TargetGroup, 'mem
 
 export const saveTarget = async (name: string, data: NamedTarget | NamedTarget[]): Promise<void> => {
   if ((Array.isArray(data) && data.length === 1) || !Array.isArray(data)) {
-    const { url, selector, contentType, forceBrowser } = Array.isArray(data) ? data[0] : data;
-    return writeTarget(name, { url, selector, contentType, forceBrowser });
+    const { url, selector, contentType, allMatches, delim, forceBrowser } = Array.isArray(data) ? data[0] : data;
+    return writeTarget(name, { url, selector, contentType, allMatches, delim, forceBrowser });
   }
 
   return writeTarget(name, { members: [...new Set(data.map(({ name: memberName }) => memberName))] });
@@ -69,6 +69,7 @@ export const loadSavedTargets = async (names: string[]): Promise<NamedTarget[]> 
   return uniqueTargets;
 };
 
+// TODO use knownTargets keys
 export const readSavedTargetNames = (): string[] => {
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir);

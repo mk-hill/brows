@@ -9,9 +9,11 @@ import { GetContentResult } from '.';
 
 const documents: Record<string, Promise<Document>> = {};
 
+const { stdout } = printIfVerbose;
+
 export async function getContentFromResponse(target: Readonly<Target>): Promise<GetContentResult> {
-  const { url, selector, contentType, name } = target;
-  const { stdout } = printIfVerbose;
+  const { name, url, selector, contentType, allMatches, delim } = target;
+  const resultProps = { name, contentType, allMatches, delim };
 
   const title = highlight(name || selector);
 
@@ -30,13 +32,27 @@ export async function getContentFromResponse(target: Readonly<Target>): Promise<
   }
 
   const document = await documents[url];
+
+  if (allMatches) {
+    const elements = document.querySelectorAll(selector);
+
+    throwIfNotFound(target, !!elements?.length);
+
+    const content = [...elements].map((el) => el?.[contentType]?.trim()).filter(Boolean) as string[];
+    return { ...resultProps, content };
+  }
   const element = document.querySelector(selector);
 
-  if (!element) {
+  throwIfNotFound(target, !!element);
+  const content = element?.[contentType]?.trim() ?? '';
+  return { ...resultProps, content };
+}
+
+function throwIfNotFound({ url, selector, name }: Target, condition: boolean) {
+  const title = highlight(name || selector);
+  if (!condition) {
     throw new ElementNotFoundError(url, selector);
   } else {
     stdout(`Found ${title} in ${name ? '' : highlight(url) + ' '}response data`);
   }
-
-  return { name, content: element[contentType] ?? '' };
 }

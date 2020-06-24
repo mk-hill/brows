@@ -12,7 +12,7 @@ const pages: Record<string, Promise<Page>> = {};
 const { stdout } = printIfVerbose;
 
 export async function getContentFromBrowser(target: Readonly<Target>): Promise<GetContentResult> {
-  const { url, selector, contentType, name } = target;
+  const { name, url, selector, contentType, allMatches, delim } = target;
 
   if (!browserPromise) launchBrowser();
 
@@ -44,7 +44,19 @@ export async function getContentFromBrowser(target: Readonly<Target>): Promise<G
 
   stdout(`Found ${title} in browser page`);
 
-  return { name, content: await page.$eval(selector, (element, contentType) => element[contentType] ?? '', contentType) };
+  let content;
+
+  if (allMatches) {
+    content = await page.$$eval(
+      selector,
+      (elements, contentType) => elements.map((element) => element?.[contentType]?.trim()).filter(Boolean) as string[],
+      contentType
+    );
+  } else {
+    content = await page.$eval(selector, (element, contentType) => element?.[contentType]?.trim() ?? '', contentType);
+  }
+
+  return { name, content, contentType, allMatches, delim };
 }
 
 export async function launchBrowser(): Promise<void> {

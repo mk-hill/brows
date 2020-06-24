@@ -1,10 +1,8 @@
-#!/usr/bin/env node
-
 import meow from 'meow';
 
-import brows, { closeBrowser, Result } from '.';
+import brows, { closeBrowser } from '.';
 import { options as defaults } from './defaults';
-import { highlight, formatResults } from './util';
+import { highlight } from './util';
 
 const cli = meow(
   `
@@ -18,6 +16,8 @@ const cli = meow(
       -s, --save <name>       Save target or group for future use with given name
       --save-only <name>      Save target or group and exit without retrieving content 
       -h, --html              Retrieve target's outer HTML instead of its text content
+      -a, --all-matches       Target all matching elements instead of just the first one
+      -d, --delim <string>    Set delimiter between results for -a. Defaults to newline
       -f, --force-browser     Prevent request attempt and force browser launch
       -l, --list-saved        Print a list of all saved targets and groups
       -i, --import <source>   Import targets and groups from source file  
@@ -74,43 +74,56 @@ const cli = meow(
         type: 'string',
         default: defaults.saveOnly,
       },
-      listSaved: {
-        type: 'boolean',
-        alias: 'l',
-        default: defaults.listSaved,
-      },
       html: {
         type: 'boolean',
         alias: 'h',
         default: defaults.html,
+      },
+      allMatches: {
+        type: 'boolean',
+        alias: 'a',
+        default: defaults.allMatches,
+      },
+      delim: {
+        type: 'string',
+        alias: 'd',
+        default: defaults.delim,
       },
       forceBrowser: {
         type: 'boolean',
         alias: 'f',
         default: defaults.forceBrowser,
       },
-      export: {
-        type: 'string',
-        alias: 'e',
+      listSaved: {
+        type: 'boolean',
+        alias: 'l',
+        default: defaults.listSaved,
       },
       import: {
         type: 'string',
         alias: 'i',
+        default: defaults.import,
+      },
+      export: {
+        type: 'string',
+        alias: 'e',
+        default: defaults.export,
       },
       orderedPrint: {
         type: 'boolean',
         alias: 'o',
         default: defaults.orderedPrint,
       },
-      // Renamed to orderedPrint, support until next major version
-      ordered: {
-        type: 'boolean',
-        default: defaults.orderedPrint,
-      },
       verbose: {
         type: 'boolean',
         alias: 'v',
         default: defaults.verbose,
+      },
+
+      // Renamed to orderedPrint, support until next major version
+      ordered: {
+        type: 'boolean',
+        default: defaults.orderedPrint,
       },
     },
   }
@@ -128,7 +141,7 @@ export interface Flags {
   verbose: boolean;
 }
 
-async function run() {
+export async function run(): Promise<void> {
   try {
     const { input, flags: cliFlags } = cli;
     const { ordered, orderedPrint, ...rest } = cliFlags;
@@ -138,12 +151,8 @@ async function run() {
     }
 
     const flags: Flags = { orderedPrint: ordered || orderedPrint, ...rest };
-    const result: Result = await brows(...input, flags);
+    await brows(...input, flags);
     closeBrowser();
-    if (flags.orderedPrint) {
-      const message = formatResults(result);
-      if (message.trim()) console.log(message);
-    }
   } catch (e) {
     const suggestVerbose = `Try repeating the command with the '${highlight('--verbose')}' option to see what's going wrong`;
     const suggestHelp = `or using '${highlight('brows --help')}' for a detailed explanation of usage and options`;
@@ -151,5 +160,3 @@ async function run() {
     closeBrowser().then(() => process.exit(1));
   }
 }
-
-run();

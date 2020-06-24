@@ -1,15 +1,14 @@
 import * as defaults from './defaults';
 import { getContent, launchBrowser, GetContentResult } from './getContent';
 import { extractOptions, Options } from './options';
-import { buildTargets, listSavedTargets, saveTarget, importAllFromFile, exportAllSaved } from './targets';
-import { formatSingleResult } from './util';
+import { buildTargets, listSavedTargets, saveTarget, importAllFromFile, exportAllSaved, NamedTarget } from './targets';
+import { formatTargetResult, formatAllResults } from './util';
 import state, { init } from './state';
-import { NamedTarget } from './targets/types';
 
 export { launchBrowser, closeBrowser } from './getContent';
 
 export type Input = (string | Partial<Options>)[];
-export type Result = Record<string, string>;
+export type Result = Record<string, string | string[]>;
 
 /**
  * Retrieve content from target(s)
@@ -21,13 +20,13 @@ export type Result = Record<string, string>;
  */
 export default async function brows(...args: Input): Promise<Result> {
   const [input, targetOptions, runOptions] = extractOptions(args);
-  const { listSaved, save, saveOnly } = init(runOptions);
+  const { listSaved, save, saveOnly, import: importTarget, export: exportTarget, orderedPrint } = init(runOptions);
   const ongoing: Promise<void>[] = [];
 
   // TODO list/import/save at start only if not saving
   if (listSaved) ongoing.push(listSavedTargets());
-  if (runOptions.import) ongoing.push(importAllFromFile(runOptions.import));
-  if (runOptions.export) ongoing.push(exportAllSaved(runOptions.export));
+  if (importTarget) ongoing.push(importAllFromFile(importTarget));
+  if (exportTarget) ongoing.push(exportAllSaved(exportTarget));
 
   let results: GetContentResult[] = [];
 
@@ -44,21 +43,25 @@ export default async function brows(...args: Input): Promise<Result> {
     if (targets.some(({ forceBrowser }) => forceBrowser)) launchBrowser();
 
     results = await Promise.all(
-      targets.map((target) => getContent(target).then((result) => printIfAsyncAllowed(result, targets.length > 1)))
+      targets.map((target) =>
+        getContent(target).then((result) => {
+          if (!state.orderedPrint) {
+            console.log(formatTargetResult(result, targets.length > 1));
+          }
+          return result;
+        })
+      )
     );
   } else if (state.isInputRequired) {
     throw new Error('No input');
   }
 
+  if (orderedPrint) {
+    const message = formatAllResults(results);
+    if (message.trim()) console.log(message.trim());
+  }
+
   await Promise.all(ongoing);
 
   return results.reduce((result, { name, content }) => ({ ...result, [name || defaults.targetName]: content }), {});
-}
-
-function printIfAsyncAllowed(result: GetContentResult, includeName: boolean) {
-  if (!state.orderedPrint) {
-    const { name, content } = result;
-    console.log(formatSingleResult(name, content, includeName));
-  }
-  return result;
 }

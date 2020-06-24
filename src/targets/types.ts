@@ -8,6 +8,8 @@ export interface Target {
   url: string;
   selector: string;
   contentType: ContentType;
+  allMatches: boolean;
+  delim: string;
   forceBrowser: boolean;
   members?: string[];
 }
@@ -29,8 +31,10 @@ export const isValidTargetEntry = ([key, value]: [string, unknown]): boolean => 
     case 'name':
     case 'url':
     case 'selector':
+    case 'delim':
       return typeof value === 'string';
     case 'forceBrowser':
+    case 'allMatches':
       return typeof value === 'boolean';
     case 'contentType':
       return Object.values(ContentType).includes(value as ContentType);

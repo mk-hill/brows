@@ -7,7 +7,7 @@ import { Target, ContentType } from './types';
 import { readSavedTargetNames, readTarget, loadSavedTargets } from './data';
 
 export { readTarget, saveTarget, updateSavedTarget, dataDir, exportAllSaved, importAllFromFile } from './data';
-export { Target, ContentType } from './types';
+export { Target, NamedTarget, ContentType } from './types';
 
 const { stdout, stderr } = printIfVerbose;
 
@@ -15,7 +15,7 @@ export async function buildTargets(input: string[], targetOptions: TargetOptions
   const savedTargetNames = readSavedTargetNames();
 
   const { save, saveOnly } = runOptions;
-  const { html, forceBrowser } = targetOptions;
+  const { html, forceBrowser, allMatches, delim } = targetOptions;
   const name = save || saveOnly;
   const contentType = html ? ContentType.OUTER_HTML : ContentType.TEXT_CONTENT;
 
@@ -47,7 +47,7 @@ export async function buildTargets(input: string[], targetOptions: TargetOptions
       stderr(`Expected one URL and one CSS selector, received ${highlight(input.length)} parameters. Ignoring: ${extraParams}`);
     }
 
-    targets = [{ name, url, selector, contentType, forceBrowser }];
+    targets = [{ name, url, selector, contentType, allMatches, delim, forceBrowser }];
   }
 
   return targets;
@@ -59,5 +59,5 @@ export const listSavedTargets = (): Promise<void> =>
     // highlight all keys except target properties
     const regex = new RegExp(`^(?!\\s*(${Object.keys(defaultTarget).join('|')}):)\\s*(.*)(?=:)`, 'gm');
     const message = new ExportData(allSaved).toYaml().replace(regex, highlight);
-    console.log(message);
+    console.log(message.trim());
   });

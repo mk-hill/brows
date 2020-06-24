@@ -2,6 +2,8 @@ import { TargetOptions, RunOptions, Options } from './options';
 
 export const targetOptions: TargetOptions = {
   html: false,
+  allMatches: false,
+  delim: '\n',
   forceBrowser: false,
 };
 
