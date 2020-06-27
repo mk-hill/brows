@@ -14,6 +14,7 @@ export const runOptions: RunOptions = {
   export: '',
   import: '',
   orderedPrint: false,
+  acceptAllPrompts: false,
   verbose: false,
 };
 

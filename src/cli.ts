@@ -3,6 +3,7 @@ import meow from 'meow';
 import brows, { closeBrowser } from '.';
 import { options as defaults } from './defaults';
 import { highlight, print } from './util';
+import { Options } from './options';
 
 const cli = meow(
   `
@@ -23,7 +24,8 @@ const cli = meow(
       -i, --import <source>   Import targets and groups from source file  
       -e, --export <target>   Export all saved targets and groups to target file
       -o, --ordered-print     Print results in the order their targets were passed
-      -v, --verbose           Print information about about what is being done  
+      -v, --verbose           Print information about about what is being done
+      -y, --yes               Accept any confirmation prompts without displaying them  
       --help                  Display this message
 
       --list-saved, --import, and --export can be used without any other input to only 
@@ -119,6 +121,11 @@ const cli = meow(
         alias: 'v',
         default: defaults.verbose,
       },
+      yes: {
+        type: 'boolean',
+        alias: 'y',
+        default: defaults.acceptAllPrompts,
+      },
 
       // Renamed to orderedPrint, support until next major version
       ordered: {
@@ -138,20 +145,21 @@ export interface Flags {
   import: string;
   export: string;
   orderedPrint: boolean;
+  yes: boolean;
   verbose: boolean;
 }
 
 export async function run(): Promise<void> {
   try {
     const { input, flags: cliFlags } = cli;
-    const { ordered, orderedPrint, ...rest } = cliFlags;
+    const { ordered, orderedPrint, yes, ...rest } = cliFlags;
 
     if (ordered) {
       print(`--ordered has been renamed to --ordered-print. Support will be dropped in a future version.`, 'warn');
     }
 
-    const flags: Flags = { orderedPrint: ordered || orderedPrint, ...rest };
-    await brows(...input, flags);
+    const options: Options = { orderedPrint: ordered || orderedPrint, acceptAllPrompts: yes, ...rest };
+    await brows(...input, options);
     closeBrowser();
   } catch (e) {
     const suggestVerbose = `Try repeating the command with the '${highlight('--verbose')}' option to see what's going wrong`;

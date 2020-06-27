@@ -21,6 +21,7 @@ export interface RunOptions {
   export: string;
   import: string;
   orderedPrint: boolean;
+  acceptAllPrompts: boolean;
   verbose: boolean;
 }
 

@@ -18,6 +18,10 @@ export default {
     return options.orderedPrint;
   },
 
+  get acceptAllPrompts(): boolean {
+    return options.acceptAllPrompts;
+  },
+
   get isInputRequired(): boolean {
     return !(options.listSaved || options.import || options.export);
   },

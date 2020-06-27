@@ -2,7 +2,7 @@ import { readdirSync, mkdirSync, existsSync, readFile, writeFile, rmdir } from '
 import { promisify } from 'util';
 import path from 'path';
 
-import { filterProps, printIfVerbose, highlight, confirm, print } from '../util';
+import { filterProps, printIfVerbose, highlight, confirm } from '../util';
 
 import defaults from './defaults';
 import ExportData from './ExportData';
@@ -138,13 +138,14 @@ export const importAllFromFile = async (filePath: string): Promise<void> => {
   stdout(`Found ${highlight(targets.length)} targets and ${highlight(groups.length)} groups in file`);
 
   const existingNames = getSavedNames();
-  const filesToBeOverwritten = [...targets, ...groups].map(({ name }) => name).filter((name) => existingNames.includes(name));
+  const namesInBoth = [...targets, ...groups].map(({ name }) => name).filter((name) => existingNames.includes(name));
 
-  if (filesToBeOverwritten.length) {
-    const names = filesToBeOverwritten.map(highlight).join(', ');
-    print(`${highlight(filesToBeOverwritten.length)} names match existing ones and would be overwritten: ${names}`, 'warn');
+  if (namesInBoth.length) {
+    const names = namesInBoth.map(highlight).join(', ');
     try {
-      await confirm('Import anyway?');
+      await confirm(
+        `${highlight(namesInBoth.length)} names match existing ones and would be overwritten: ${names}\nImport anyway?`
+      );
     } catch {
       return console.log('Aborted import');
     }

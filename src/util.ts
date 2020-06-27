@@ -5,6 +5,8 @@ import state from './state';
 import { GetContentResult } from './getContent';
 
 export async function confirm(message: string): Promise<void> {
+  if (state.acceptAllPrompts) return;
+
   await state.promptSettled;
 
   const rl = readline.createInterface({

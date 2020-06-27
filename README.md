@@ -5,7 +5,6 @@
 [![dependencies](https://img.shields.io/librariesio/release/npm/brows.svg?style=flat-square)](https://libraries.io/npm/brows)
 [![downloads](https://img.shields.io/npm/dm/brows.svg?style=flat-square)](https://npm-stat.com/charts.html?package=brows)
 [![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/blob/master/LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/pulls)
 [![language](https://img.shields.io/github/languages/top/mk-hill/brows.svg?style=flat-square)](https://github.com/mk-hill/brows/search?l=typescript)
 
 An easy to use application for consuming text content from any website in the command line. Uses CSS selectors to retrieve content.
@@ -65,6 +64,7 @@ brows [options] <name> [<name> ...]
 | `--export <target>`  | `-e`  | Export all saved targets and groups to target file         |
 | `--ordered-print`    | `-o`  | Print results in the order their targets were passed       |
 | `--verbose`          | `-v`  | Print information about about what is being done           |
+| `--yes`              | `-y`  | Accept any confirmation prompts without displaying them    |
 | `--help`             |       | Print a detailed explanation of usage and options          |
 
 ## Examples
@@ -176,8 +176,22 @@ availability: Temporarily out of stock.
 `--import` and `--export` use a relative or absolute path to a file.
 
 ```console
-brows -i example.yaml
-brows -e /absolute/path/to/example2.yml
+$ brows -i example.yml
+$ brows -e /absolute/path/to/example2.yaml
+```
+
+brows will prompt for confirmation before overwriting anything by default.
+
+```console
+$ brows -i example.yml
+3 names match existing ones and would be overwritten: temperature, precipitation, weather
+Import anyway? Y/N:
+```
+
+`--yes` will accept any such prompts which would have otherwise been displayed.
+
+```console
+$ brows -i example.yml -y
 ```
 
 The `--ordered-print` option can be used to wait for all results to be ready and print them in the order their targets were passed instead of printing each result as it's retrieved.
