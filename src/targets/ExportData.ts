@@ -1,6 +1,6 @@
 import YAML from 'yaml';
 
-import { filterProps, splitByFilter, printIfVerbose, typedEntries, formatUrl, plural, highlight } from '../util';
+import { filterProps, splitByFilter, printIfVerbose, typedEntries, formatUrl, plural, highlight, print } from '../util';
 
 import defaults, { matchesAllDefaults } from './defaults';
 import { NamedTarget, isGroup, Target, TargetGroup, isValidTargetEntry, isValidGroupEntry } from './types';
@@ -77,11 +77,11 @@ class ExportData {
 
     const [validKeys, invalidKeys] = splitByFilter(Object.keys(exportedTarget), (key) => key in validOnly);
     if (invalidKeys.length) {
-      console.error(`Invalid ${plural('property', invalidKeys.length)} in ${highlight(name)}: ${invalidKeys}`);
+      print(`Invalid ${plural('property', invalidKeys.length)} in ${highlight(name)}: ${invalidKeys}`, 'error');
       if (invalidKeys.includes('selector')) {
         throw new Error(`Cannot import ${highlight(name)} without valid selector`);
       } else {
-        console.error(`Only importing valid properties from ${highlight(name)}: ${validKeys}`);
+        print(`Only importing valid properties from ${highlight(name)}: ${validKeys}`, 'error');
       }
     }
 

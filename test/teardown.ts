@@ -1,6 +1,7 @@
 import { unlink } from 'fs';
 import { promisify } from 'util';
 import { resolve } from 'path';
+
 import { closeBrowser } from '../src/getContent';
 import { deleteAllData } from '../src/targets/data';
 import { paths } from './setup';

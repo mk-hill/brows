@@ -1,18 +1,18 @@
 import { TargetOptions, RunOptions } from '../options';
-import { formatUrl, highlight, printIfVerbose, plural, splitByFilter } from '../util';
+import { formatUrl, highlight, printIfVerbose, plural, splitByFilter, print } from '../util';
 
 import ExportData from './ExportData';
 import defaultTarget from './defaults';
 import { Target, ContentType } from './types';
-import { readSavedTargetNames, readTarget, loadSavedTargets } from './data';
+import { getSavedNames, readTarget, loadSavedTargets } from './data';
 
-export { readTarget, saveTarget, updateSavedTarget, dataDir, exportAllSaved, importAllFromFile } from './data';
+export { readTarget, confirmAndSave, updateSavedTarget, dataDir, exportAllSaved, importAllFromFile } from './data';
 export { Target, NamedTarget, ContentType } from './types';
 
 const { stdout, stderr } = printIfVerbose;
 
 export async function buildTargets(input: string[], targetOptions: TargetOptions, runOptions: RunOptions): Promise<Target[]> {
-  const savedTargetNames = readSavedTargetNames();
+  const savedTargetNames = getSavedNames();
 
   const { save, saveOnly } = runOptions;
   const { html, forceBrowser, allMatches, delim } = targetOptions;
@@ -26,7 +26,7 @@ export async function buildTargets(input: string[], targetOptions: TargetOptions
     if (rest.length) {
       const [found, unknown] = [foundNames, rest].map((ar) => ar.map(highlight).join(', '));
       const suggestion = 'Use either one URL followed by one CSS selector or only saved target names';
-      console.error(`Found ${found} in saved targets but not ${unknown}\nIgnoring ${unknown}\n${suggestion}`);
+      print(`Found ${found} in saved targets but not ${unknown}\nIgnoring ${unknown}\n${suggestion}`, 'error');
     }
     stdout(`Loading saved ${plural('target', foundNames.length)}: ${foundNames.map(highlight).join(', ')}`);
     targets = await loadSavedTargets(foundNames).then((targets) => {
@@ -54,10 +54,10 @@ export async function buildTargets(input: string[], targetOptions: TargetOptions
 }
 
 export const listSavedTargets = (): Promise<void> =>
-  Promise.all(readSavedTargetNames().map(readTarget)).then((allSaved) => {
+  Promise.all(getSavedNames().map(readTarget)).then((allSaved) => {
     if (!allSaved.length) throw new Error('No saved data to list');
     // highlight all keys except target properties
     const regex = new RegExp(`^(?!\\s*(${Object.keys(defaultTarget).join('|')}):)\\s*(.*)(?=:)`, 'gm');
     const message = new ExportData(allSaved).toYaml().replace(regex, highlight);
-    console.log(message.trim());
+    print(message.trim());
   });

@@ -1,8 +1,8 @@
 import * as defaults from './defaults';
 import { getContent, launchBrowser, GetContentResult } from './getContent';
 import { extractOptions, Options } from './options';
-import { buildTargets, listSavedTargets, saveTarget, importAllFromFile, exportAllSaved, NamedTarget } from './targets';
-import { formatTargetResult, formatAllResults } from './util';
+import { buildTargets, listSavedTargets, importAllFromFile, exportAllSaved, NamedTarget, confirmAndSave } from './targets';
+import { formatTargetResult, formatAllResults, print } from './util';
 import state, { init } from './state';
 
 export { launchBrowser, closeBrowser } from './getContent';
@@ -35,7 +35,7 @@ export default async function brows(...args: Input): Promise<Result> {
 
     const name = save || saveOnly;
     if (name) {
-      ongoing.push(saveTarget(name, targets as NamedTarget[]));
+      ongoing.push(confirmAndSave(name, targets as NamedTarget[]));
       if (saveOnly) return {};
     }
 
@@ -44,9 +44,9 @@ export default async function brows(...args: Input): Promise<Result> {
 
     results = await Promise.all(
       targets.map((target) =>
-        getContent(target).then((result) => {
+        getContent(target).then(async (result) => {
           if (!state.orderedPrint) {
-            console.log(formatTargetResult(result, targets.length > 1));
+            print(formatTargetResult(result, targets.length > 1));
           }
           return result;
         })
@@ -58,7 +58,7 @@ export default async function brows(...args: Input): Promise<Result> {
 
   if (orderedPrint) {
     const message = formatAllResults(results);
-    if (message.trim()) console.log(message.trim());
+    if (message) print(message);
   }
 
   await Promise.all(ongoing);

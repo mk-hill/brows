@@ -2,7 +2,7 @@ import meow from 'meow';
 
 import brows, { closeBrowser } from '.';
 import { options as defaults } from './defaults';
-import { highlight } from './util';
+import { highlight, print } from './util';
 
 const cli = meow(
   `
@@ -147,7 +147,7 @@ export async function run(): Promise<void> {
     const { ordered, orderedPrint, ...rest } = cliFlags;
 
     if (ordered) {
-      console.warn(`--ordered has been renamed to --ordered-print. Support will be dropped in a future version.`);
+      print(`--ordered has been renamed to --ordered-print. Support will be dropped in a future version.`, 'warn');
     }
 
     const flags: Flags = { orderedPrint: ordered || orderedPrint, ...rest };
@@ -156,7 +156,7 @@ export async function run(): Promise<void> {
   } catch (e) {
     const suggestVerbose = `Try repeating the command with the '${highlight('--verbose')}' option to see what's going wrong`;
     const suggestHelp = `or using '${highlight('brows --help')}' for a detailed explanation of usage and options`;
-    console.error(`${e.message}\n${suggestVerbose},\n${suggestHelp}.`);
+    print(`${e.message}\n${suggestVerbose},\n${suggestHelp}.`, 'error');
     closeBrowser().then(() => process.exit(1));
   }
 }

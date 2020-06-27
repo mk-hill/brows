@@ -2,10 +2,11 @@
 
 [![npm version](https://img.shields.io/npm/v/brows.svg?style=flat-square)](https://www.npmjs.org/package/brows)
 [![build status](https://img.shields.io/travis/mk-hill/brows/master.svg?style=flat-square)](https://travis-ci.org/mk-hill/brows)
-[![dependencies](https://img.shields.io/david/mk-hill/brows.svg?style=flat-square)](https://david-dm.org/mk-hill/brows)
+[![dependencies](https://img.shields.io/librariesio/release/npm/brows.svg?style=flat-square)](https://libraries.io/npm/brows)
+[![downloads](https://img.shields.io/npm/dm/brows.svg?style=flat-square)](https://npm-stat.com/charts.html?package=brows)
 [![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/blob/master/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/pulls)
-[![language](https://img.shields.io/github/languages/top/mk-hill/brows.svg?style=flat-square)](https://github.com/mk-hill/brows)
+[![language](https://img.shields.io/github/languages/top/mk-hill/brows.svg?style=flat-square)](https://github.com/mk-hill/brows/search?l=typescript)
 
 An easy to use application for consuming text content from any website in the command line. Uses CSS selectors to retrieve content.
 
@@ -14,12 +15,13 @@ An easy to use application for consuming text content from any website in the co
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Options](#options)
 - [Examples](#examples)
   - [Basic usage](#basic-usage)
   - [Saving targets](#saving-targets)
   - [Saving groups](#saving-groups)
-  - [Importing and exporting](#importing-and-exporting)
   - [Other](#other)
+- [Import/Export](#importexport)
 - [Additional Details](#additional-details)
 
 ## Features
@@ -47,6 +49,8 @@ brows can either be used with one URL followed by one selector, or any number of
 brows [options] <url> <selector>
 brows [options] <name> [<name> ...]
 ```
+
+## Options
 
 | Option               | Alias | Description                                                |
 | -------------------- | ----- | ---------------------------------------------------------- |
@@ -91,7 +95,7 @@ Support
 Flux architecture example
 ```
 
-`--delim` can be used to specify a different delimiter than the default newline.
+`--delim` can be used to specify a different delimiter than the default newline for `--all-matches`.
 
 ```console
 $ brows -a -d ', ' todomvc.com/examples/react 'ul:first-of-type li'
@@ -152,13 +156,13 @@ Further grouping saved targets (and groups of targets) makes this easy to do for
 ```console
 $ brows --save-only latestKurzgesagt 'youtube.com/user/Kurzgesagt/videos?sort=dd' '#video-title'
 $ brows --save-only availability amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090 '#availability span'
-$ brows --save-only allExamples weather availability latestKurzgesagt titleHtml listItems
+$ brows --save-only examples weather availability latestKurzgesagt titleHtml listItems
 ```
 
 Results are printed as they are retrieved [by default](#other).
 
 ```console
-$ brows allExamples
+$ brows examples
 titleHtml: <h1>World Wide Web</h1>
 listItems: Tutorial, Philosophy, Support, Flux architecture example
 temperature: 23
@@ -167,7 +171,7 @@ latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It
 availability: Temporarily out of stock.
 ```
 
-### Importing and exporting
+### Other
 
 `--import` and `--export` use a relative or absolute path to a file.
 
@@ -175,6 +179,26 @@ availability: Temporarily out of stock.
 brows -i example.yaml
 brows -e /absolute/path/to/example2.yml
 ```
+
+The `--ordered-print` option can be used to wait for all results to be ready and print them in the order their targets were passed instead of printing each result as it's retrieved.
+
+```console
+$ brows examples -o
+temperature: 23
+precipitation: 15%
+availability: Temporarily out of stock.
+latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
+titleHtml: <h1>World Wide Web</h1>
+listItems: Tutorial, Philosophy, Support, Flux architecture example
+```
+
+Browser requirements are [handled automatically](#additional-details) for the vast majority of use cases. The `--force-browser` option will override defaults if needed.
+
+```console
+$ brows my-single-page-app.com html -h --force-browser > spa.html
+```
+
+## Import/Export
 
 The import/export format is based around creating, editing, and transferring any number of targets and groups as easily as possible:
 
@@ -262,7 +286,7 @@ Targets:
       forceBrowser: true
       selector: '#video-title'
 Groups:
-  allExamples:
+  examples:
     - temperature
     - precipitation
     - availability
@@ -272,26 +296,6 @@ Groups:
   weather:
     - temperature
     - precipitation
-```
-
-### Other
-
-The `--ordered-print` option can be used to wait for every target's content to be ready and print all of them together in the order they were passed instead of printing each result as it's retrieved.
-
-```console
-$ brows allExamples -o
-temperature: 23
-precipitation: 15%
-availability: Temporarily out of stock.
-latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
-titleHtml: <h1>World Wide Web</h1>
-listItems: Tutorial, Philosophy, Support, Flux architecture example
-```
-
-Browser requirements are [handled automatically](#additional-details) for the vast majority of use cases. The `--force-browser` option will override defaults if needed.
-
-```console
-$ brows my-single-page-app.com html -h --force-browser > spa.html
 ```
 
 ## Additional Details

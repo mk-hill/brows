@@ -7,6 +7,8 @@ export const init = (runOptions: RunOptions): RunOptions => {
   return runOptions;
 };
 
+let ongoingPrompt: Promise<void> | null = null;
+
 export default {
   get verbose(): boolean {
     return options.verbose;
@@ -18,5 +20,21 @@ export default {
 
   get isInputRequired(): boolean {
     return !(options.listSaved || options.import || options.export);
+  },
+
+  set prompt(promise: Promise<void> | null) {
+    ongoingPrompt = promise;
+  },
+
+  get hasPrompt(): boolean {
+    return ongoingPrompt !== null;
+  },
+
+  get promptSettled(): Promise<void> | undefined {
+    return ongoingPrompt?.catch(() => undefined);
+  },
+
+  get promptResolved(): Promise<void> | null {
+    return ongoingPrompt;
   },
 };

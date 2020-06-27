@@ -1,15 +1,19 @@
-import brows from '../src';
-import { readTarget, ContentType } from '../src/targets';
-import { urls, selectors, results, names, paths } from './setup';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
-import { deleteAllData } from '../src/targets/data';
+
+import brows from '../src';
+import { readTarget, ContentType } from '../src/targets';
+import * as util from '../src/util';
+
+import { urls, selectors, results, names, paths } from './setup';
 
 const { h1, dt, itemsInFirstList } = selectors;
 
 beforeAll(() => {
   console.log = jest.fn();
   console.error = jest.fn();
+  console.warn = jest.fn();
+  jest.spyOn(util, 'confirm').mockImplementation(async () => undefined);
 });
 
 describe('Invalid input', () => {
@@ -309,8 +313,6 @@ describe('Exports', () => {
 });
 
 describe('Imports', () => {
-  beforeEach(deleteAllData);
-
   test('Imports from relative path', () =>
     brows({ import: paths.exportRelative }).then(() =>
       expect(brows(names.combinedGroups)).resolves.toMatchObject({

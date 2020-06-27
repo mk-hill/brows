@@ -1,7 +1,30 @@
 import pretty from 'pretty';
+import readline from 'readline';
 
 import state from './state';
 import { GetContentResult } from './getContent';
+
+export async function confirm(message: string): Promise<void> {
+  await state.promptSettled;
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  const promise: Promise<void> = new Promise((resolve, reject) => {
+    rl.question(message + ' Y/N:', (answer) => {
+      rl.close();
+      state.prompt = null;
+
+      const confirmed = ['yes', 'y'].includes(answer?.trim()?.toLowerCase());
+      return confirmed ? resolve() : reject();
+    });
+  });
+
+  state.prompt = promise;
+  return promise;
+}
 
 export const highlight = (s: Required<{ toString(): void }>): string => `\x1b[36m${s}\x1b[0m`;
 
@@ -48,7 +71,10 @@ export const formatTargetResult = (result: GetContentResult, includeName: boolea
 };
 
 export const formatAllResults = (results: GetContentResult[]): string =>
-  results.map((result) => formatTargetResult(result, results.length > 1)).join('\n');
+  results
+    .map((result) => formatTargetResult(result, results.length > 1))
+    .join('\n')
+    .trim();
 
 /**
  * Careful, only appends 's' and handles '-y' -> '-ies' for the moment
@@ -84,11 +110,16 @@ export const splitByFilter = <T>(ar: T[], predicate: (elem: T) => boolean): [T[]
   );
 };
 
+export const print = async (message: string, type: 'log' | 'error' | 'warn' = 'log'): Promise<void> => {
+  await state.promptSettled;
+  console[type](message);
+};
+
 export const printIfVerbose = {
-  stdout: (message: string): void => {
-    state.verbose && console.log(message);
+  stdout: async (message: string): Promise<void> => {
+    state.verbose && print(message);
   },
-  stderr: (message: string): void => {
-    state.verbose && console.error(message);
+  stderr: async (message: string): Promise<void> => {
+    state.verbose && print(message, 'error');
   },
 };

@@ -3,6 +3,7 @@ import { getContentFromBrowser } from './browser';
 import { Target, updateSavedTarget, ContentType } from '../targets';
 import { ElementNotFoundError } from './ElementNotFoundError';
 import { highlight, printIfVerbose } from '../util';
+import state from '../state';
 
 export { launchBrowser, closeBrowser } from './browser';
 
@@ -14,9 +15,10 @@ export interface GetContentResult {
   delim: string;
 }
 
+const { stdout, stderr } = printIfVerbose;
+
 export async function getContent(target: Target): Promise<GetContentResult> {
   const { name, url, forceBrowser } = target;
-  const { stdout, stderr } = printIfVerbose;
 
   const title = highlight(name || url);
 
@@ -31,9 +33,13 @@ export async function getContent(target: Target): Promise<GetContentResult> {
       stderr(`${message} ${title} response, using browser`);
 
       if (name && !forceBrowser) {
-        updateSavedTarget(name, { forceBrowser: true }).then(() =>
-          stdout(`Updated saved target ${highlight(name)} to skip request attempt in the future`)
-        );
+        if (state.hasPrompt) {
+          state.promptResolved
+            ?.then(updateForceBrowser.bind(null, name))
+            ?.catch(() => stdout('Aborted automatic forceBrowser update as overwrite was declined'));
+        } else {
+          updateForceBrowser(name);
+        }
       }
     }
   } else {
@@ -43,3 +49,8 @@ export async function getContent(target: Target): Promise<GetContentResult> {
   stdout(`Retrieving ${title} content from browser`);
   return getContentFromBrowser(target);
 }
+
+const updateForceBrowser = (name: string) =>
+  updateSavedTarget(name, { forceBrowser: true }).then(() =>
+    stdout(`Updated saved target ${highlight(name)} to skip request attempt in the future`)
+  );
