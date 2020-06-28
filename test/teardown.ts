@@ -14,4 +14,5 @@ export default (): Promise<never> =>
     deleteAllData(),
     deleteFile(paths.exportAbsolute),
     deleteFile(resolve(process.cwd(), paths.exportRelative)),
+    deleteFile(paths.default),
   ]).then(() => process.exit());
