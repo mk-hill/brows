@@ -1,5 +1,6 @@
 import { resolve } from 'path';
 import * as defaults from '../src/defaults';
+import { exportsFileName } from '../src/targets/defaults';
 
 export const urls = {
   unformatted: 'info.cern.ch/hypertext/WWW/TheProject.html',
@@ -72,4 +73,5 @@ export const results = {
 export const paths = {
   exportRelative: 'testExport1.yml',
   exportAbsolute: resolve(process.cwd(), 'testExport2.yml'),
+  default: resolve(process.cwd(), exportsFileName),
 };

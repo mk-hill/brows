@@ -1,18 +1,15 @@
-import { readdirSync, mkdirSync, existsSync, readFile, writeFile, rmdir } from 'fs';
-import { promisify } from 'util';
+import { readdirSync, mkdirSync, existsSync, promises } from 'fs';
 import path from 'path';
 
 import { filterProps, printIfVerbose, highlight, confirm } from '../util';
 
-import defaults from './defaults';
+import defaults, { exportsFileName } from './defaults';
 import ExportData from './ExportData';
 import { Target, NamedTarget, isGroup, TargetGroup } from './types';
 
 export const dataDir = `${path.resolve(__dirname, '../data')}`;
 
-const read = promisify(readFile);
-const write = promisify(writeFile);
-const rmDir = promisify(rmdir);
+const { readFile, writeFile, rmdir, lstat } = promises;
 
 const { stdout } = printIfVerbose;
 
@@ -20,7 +17,7 @@ const knownTargets: Record<string, NamedTarget | undefined> = {};
 
 export const readTarget = async (name: string): Promise<NamedTarget> =>
   knownTargets[name] ??
-  read(`${dataDir}/${name}.json`, 'utf8').then((contents) => {
+  readFile(`${dataDir}/${name}.json`, 'utf8').then((contents) => {
     const target = { ...defaults, name, ...JSON.parse(contents) } as NamedTarget;
     knownTargets[name] = target;
     return target;
@@ -37,7 +34,11 @@ const readRecursive = async (name: string): Promise<NamedTarget[]> => {
 
 const writeTarget = async (name: string, target: Target | Pick<TargetGroup, 'members'>) => {
   knownTargets[name] = { name, ...target } as NamedTarget;
-  await write(`${dataDir}/${name}.json`, JSON.stringify(filterProps(target, ([key, value]) => value !== defaults[key])), 'utf8');
+  await writeFile(
+    `${dataDir}/${name}.json`,
+    JSON.stringify(filterProps(target, ([key, value]) => value !== defaults[key])),
+    'utf8'
+  );
   stdout(`Saved ${highlight(name)}`);
 };
 
@@ -103,6 +104,11 @@ export const getSavedNames = (): string[] => {
   return names;
 };
 
+const isDir = (path: string): Promise<boolean> =>
+  lstat(path)
+    .then((stat) => !stat.isFile())
+    .catch(() => false);
+
 export const exportAllSaved = async (filePath: string): Promise<void> => {
   stdout('Loading all saved targets and groups for export');
   const allSaved = await Promise.all(getSavedNames().map(readTarget));
@@ -114,7 +120,9 @@ export const exportAllSaved = async (filePath: string): Promise<void> => {
   stdout(`Exporting ${highlight(allSaved.length)} items`);
   const exportsYaml = new ExportData(allSaved).toYaml();
   stdout('Converted data to export format');
-  const targetPath = path.resolve(process.cwd(), filePath);
+
+  let targetPath = path.resolve(process.cwd(), filePath);
+  if (await isDir(targetPath)) targetPath = path.resolve(targetPath, exportsFileName);
 
   if (existsSync(targetPath)) {
     try {
@@ -125,14 +133,16 @@ export const exportAllSaved = async (filePath: string): Promise<void> => {
   }
 
   stdout(`Saving exports to ${highlight(targetPath)}`);
-  await write(targetPath, exportsYaml, 'utf8');
+  await writeFile(targetPath, exportsYaml, 'utf8');
   stdout(`${highlight(targetPath)} saved`);
 };
 
 export const importAllFromFile = async (filePath: string): Promise<void> => {
-  const targetPath = path.resolve(process.cwd(), filePath);
+  let targetPath = path.resolve(process.cwd(), filePath);
+  if (await isDir(targetPath)) targetPath = path.resolve(targetPath, exportsFileName);
   stdout(`Importing from ${highlight(targetPath)}`);
-  const contents = await read(targetPath, 'utf8');
+
+  const contents = await readFile(targetPath, 'utf8');
   stdout(`Read file contents`);
   const [targets, groups] = new ExportData(contents, targetPath.endsWith('.json')).toInternalData();
   stdout(`Found ${highlight(targets.length)} targets and ${highlight(groups.length)} groups in file`);
@@ -158,4 +168,4 @@ export const importAllFromFile = async (filePath: string): Promise<void> => {
   stdout('Import complete');
 };
 
-export const deleteAllData = (): Promise<void> => rmDir(dataDir, { recursive: true });
+export const deleteAllData = (): Promise<void> => rmdir(dataDir, { recursive: true });

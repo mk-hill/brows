@@ -21,8 +21,8 @@ const cli = meow(
       -d, --delim <string>    Set delimiter between results for -a. Defaults to newline
       -f, --force-browser     Prevent request attempt and force browser launch
       -l, --list-saved        Print a list of all saved targets and groups
-      -i, --import <source>   Import targets and groups from source file  
-      -e, --export <target>   Export all saved targets and groups to target file
+      -i, --import <source>   Import targets and groups from source path  
+      -e, --export <target>   Export all saved targets and groups to target path
       -o, --ordered-print     Print results in the order their targets were passed
       -v, --verbose           Print information about about what is being done
       -y, --yes               Accept any confirmation prompts without displaying them  
@@ -43,7 +43,7 @@ const cli = meow(
 
     ${highlight('Import/Export')}
       brows uses YAML for imports and exports by default. Importing JSON files with the
-      same structure is also allowed. Path to source/target file can be relative or absolute.
+      same structure is also allowed. Path to source/target can be relative or absolute.
 
     ${highlight('Details')}
       By default, brows will initially make a GET request to the URL and attempt to find the 

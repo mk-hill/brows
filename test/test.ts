@@ -310,6 +310,8 @@ describe('Exports', () => {
 
   test('Exports to absolute path', () =>
     brows({ export: paths.exportAbsolute }).then(() => expect(existsSync(paths.exportAbsolute)).toBe(true)));
+
+  test('Exports to directory', () => brows({ export: '.' }).then(() => expect(existsSync(paths.default)).toBe(true)));
 });
 
 describe('Imports', () => {
@@ -325,6 +327,16 @@ describe('Imports', () => {
 
   test('Imports from absolute path', () =>
     brows({ import: paths.exportAbsolute }).then(() =>
+      expect(brows(names.combinedGroups)).resolves.toMatchObject({
+        [names.fetchText]: results.fetchText,
+        [names.fetchHtml]: results.fetchHtml,
+        [names.spaText]: results.spaText,
+        [names.spaHtml]: results.spaHtml,
+      })
+    ));
+
+  test('Imports from directory', () =>
+    brows({ import: paths.default }).then(() =>
       expect(brows(names.combinedGroups)).resolves.toMatchObject({
         [names.fetchText]: results.fetchText,
         [names.fetchHtml]: results.fetchHtml,

@@ -19,8 +19,9 @@ An easy to use application for consuming text content from any website in the co
   - [Basic usage](#basic-usage)
   - [Saving targets](#saving-targets)
   - [Saving groups](#saving-groups)
-  - [Other](#other)
-- [Import/Export](#importexport)
+  - [Importing and exporting](#importing-and-exporting)
+  - [Overriding defaults](#overriding-defaults)
+- [Import/Export Format](#importexport-format)
 - [Additional Details](#additional-details)
 
 ## Features
@@ -30,8 +31,7 @@ An easy to use application for consuming text content from any website in the co
 - Automatically uses a headless browser [if necessary](#additional-details)
 - Retrieves content from [any number of saved targets](#saving-groups) at a time
 - [Simple import/export](#importing-and-exporting) for quickly saving and transferring many targets
-- Handles targets asynchronously
-- Doesn't make more requests (or open more browser pages) than it [needs to](#additional-details)
+- Doesn't make more requests (or open more browser pages) [than it needs to](#additional-details)
 - Conventional [environment variables](#additional-details) take care of proxy if needed
 
 ## Installation
@@ -64,7 +64,7 @@ brows [options] <name> [<name> ...]
 | `--export <target>`  | `-e`  | Export all saved targets and groups to target file         |
 | `--ordered-print`    | `-o`  | Print results in the order their targets were passed       |
 | `--verbose`          | `-v`  | Print information about about what is being done           |
-| `--yes`              | `-y`  | Accept any confirmation prompts without displaying them    |
+| `--yes`              | `-y`  | Accept confirmation prompts without displaying them        |
 | `--help`             |       | Print a detailed explanation of usage and options          |
 
 ## Examples
@@ -85,7 +85,7 @@ $ brows -h info.cern.ch/hypertext/WWW/TheProject.html h1
 <h1>World Wide Web</h1>
 ```
 
-`--all-matches` will target all elements matching the selector instead of just the first one.
+`--all-matches` will target all elements matching the selector. [By default](#overriding-defaults), results are separated by a newline.
 
 ```console
 $ brows -a todomvc.com/examples/react 'ul:first-of-type li'
@@ -93,13 +93,6 @@ Tutorial
 Philosophy
 Support
 Flux architecture example
-```
-
-`--delim` can be used to specify a different delimiter than the default newline for `--all-matches`.
-
-```console
-$ brows -a -d ', ' todomvc.com/examples/react 'ul:first-of-type li'
-Tutorial, Philosophy, Support, Flux architecture example
 ```
 
 Options can be placed anywhere.
@@ -113,7 +106,7 @@ World Wide Web
 
 ### Saving targets
 
-Targets can be saved with a given name using `---save` or `--save-only`. Content type preference is saved as well.
+Targets can be saved with a given name using `---save` or `--save-only`. Content type preferences are saved as well.
 
 ```console
 $ brows --save-only listItems todomvc.com/examples/react 'ul:first-of-type li' -a -d ', '
@@ -159,7 +152,7 @@ $ brows --save-only availability amazon.com/How-Absurd-Scientific-Real-World-Pro
 $ brows --save-only examples weather availability latestKurzgesagt titleHtml listItems
 ```
 
-Results are printed as they are retrieved [by default](#other).
+Results are printed as they are retrieved [by default](#overriding-defaults).
 
 ```console
 $ brows examples
@@ -171,27 +164,44 @@ latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It
 availability: Temporarily out of stock.
 ```
 
-### Other
+### Importing and exporting
 
-`--import` and `--export` use a relative or absolute path to a file.
+`--import` and `--export` use a relative or absolute path.
 
 ```console
 $ brows -i example.yml
 $ brows -e /absolute/path/to/example2.yaml
 ```
 
-brows will prompt for confirmation before overwriting anything by default.
+A default file name will be used if the provided path is a directory.
 
 ```console
-$ brows -i example.yml
-3 names match existing ones and would be overwritten: temperature, precipitation, weather
+$ brows -e .
+$ ls
+brows_exports.yml
+```
+
+brows will prompt for confirmation before overwriting anything [by default](#overriding-defaults).
+
+```console
+$ brows -i .
+8 names match existing ones and would be overwritten: availability, precipitation, temperature, titleHtml, listItems, latestKurzgesagt, examples, weather
 Import anyway? Y/N:
 ```
 
-`--yes` will accept any such prompts which would have otherwise been displayed.
+### Overriding defaults
+
+`--yes` will accept any confirmation prompts which would have otherwise been displayed.
 
 ```console
-$ brows -i example.yml -y
+$ brows -i . -y
+```
+
+`--delim` can be used to specify a different delimiter than the default newline for `--all-matches`.
+
+```console
+$ brows -a -d ', ' todomvc.com/examples/react 'ul:first-of-type li'
+Tutorial, Philosophy, Support, Flux architecture example
 ```
 
 The `--ordered-print` option can be used to wait for all results to be ready and print them in the order their targets were passed instead of printing each result as it's retrieved.
@@ -206,23 +216,23 @@ titleHtml: <h1>World Wide Web</h1>
 listItems: Tutorial, Philosophy, Support, Flux architecture example
 ```
 
-Browser requirements are [handled automatically](#additional-details) for the vast majority of use cases. The `--force-browser` option will override defaults if needed.
+Browser requirements are [handled automatically](#additional-details) for the vast majority of use cases. The `--force-browser` option will override this.
 
 ```console
 $ brows my-single-page-app.com html -h --force-browser > spa.html
 ```
 
-## Import/Export
+## Import/Export Format
 
 The import/export format is based around creating, editing, and transferring any number of targets and groups as easily as possible:
 
 - Uses easy to read and quick to type [YAML](https://yaml.org/start.html) format [by default](#additional-details).
-- Targets are grouped under their URLs.
+- Targets are listed under their URLs.
 - Defaults don't need to be entered.
 - If no other options are being entered, each target name can be directly mapped to its corresponding selector.
 - As in the command line, `http://` is automatically prepended to the URL if it doesn't begin with `http://` or `https://`.
 - Groups can be entered as arrays of target names in any valid YAML format.
-- You don't need to specify whether a browser is needed except for [niche use cases](#other).
+- You don't need to specify whether a browser is needed except for [niche use cases](#overriding-defaults).
 
 ```yaml
 Targets:
@@ -326,4 +336,4 @@ Groups:
   only used once. No duplicates will be retrieved or saved under the new combined group.
 - Conventional `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` environment variables
   will be used if they exist.
-- Importing [JSON](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON) files with the same structure as the YAML examples above is also supported without any additional configuration. Just pass a JSON file instead.
+- Importing [JSON](https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON) files with the [same structure](https://www.json2yaml.com/convert-yaml-to-json) as the YAML examples above is also supported without any additional configuration. Just pass a JSON file instead.
