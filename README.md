@@ -9,6 +9,17 @@
 
 An easy to use application for consuming text content from any website in the command line. Uses CSS selectors to retrieve content.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mk-hill/brows/dev/readme_demo.gif" alt="brows demo" width="600" >
+  <br>
+  <sub>
+    Shows 
+    <a href="#basic-usage">basic usage</a>, 
+    <a href="#importing-and-exporting">importing</a>, and 
+    <a href="#saving-groups">groups</a>.
+  </sub>
+</p>
+
 ## Contents
 
 - [Features](#features)
@@ -138,8 +149,8 @@ $ brows 'google.com/search?q=weather' '#wob_ttm' --save-only temperature
 $ brows 'google.com/search?q=weather' '#wob_pp' --save-only precipitation
 $ brows temperature precipitation --save-only weather
 $ brows weather
-temperature: 23
-precipitation: 15%
+temperature: 28
+precipitation: 64%
 ```
 
 It's generally much faster to retrieve all desired content together rather than performing a separate run for each target.
@@ -158,9 +169,9 @@ Results are printed as they are retrieved [by default](#overriding-defaults).
 $ brows examples
 titleHtml: <h1>World Wide Web</h1>
 listItems: Tutorial, Philosophy, Support, Flux architecture example
-temperature: 23
-precipitation: 15%
-latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
+temperature: 28
+precipitation: 64%
+latestKurzgesagt: Why Are You Alive – Life, Energy & ATP
 availability: Temporarily out of stock.
 ```
 
@@ -208,10 +219,10 @@ The `--ordered-print` option can be used to wait for all results to be ready and
 
 ```console
 $ brows examples -o
-temperature: 23
-precipitation: 15%
+temperature: 28
+precipitation: 64%
 availability: Temporarily out of stock.
-latestKurzgesagt: Who Is Responsible For Climate Change? – Who Needs To Fix It?
+latestKurzgesagt: Why Are You Alive – Life, Energy & ATP
 titleHtml: <h1>World Wide Web</h1>
 listItems: Tutorial, Philosophy, Support, Flux architecture example
 ```
