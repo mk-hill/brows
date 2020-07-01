@@ -13,6 +13,7 @@ An easy to use application for consuming text content from any website in the co
   <a href="#examples">
     <img src="https://raw.githubusercontent.com/mk-hill/brows/master/readme_demo.gif" alt="brows demo" width="650" >
   </a>
+  <br>
   <sub>
     Shows 
     <a href="#basic-usage">basic usage</a>, 
