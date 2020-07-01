@@ -2,8 +2,9 @@ import * as defaults from './defaults';
 import { getContent, launchBrowser, GetContentResult } from './getContent';
 import { extractOptions, Options } from './options';
 import { buildTargets, listSavedTargets, importAllFromFile, exportAllSaved, NamedTarget, confirmAndSave } from './targets';
-import { formatTargetResult, formatAllResults, print } from './util';
+import { printResult, printAllResults } from './stdio';
 import state, { init } from './state';
+import { error } from './util';
 
 export { launchBrowser, closeBrowser } from './getContent';
 
@@ -46,19 +47,18 @@ export default async function brows(...args: Input): Promise<Result> {
       targets.map((target) =>
         getContent(target).then(async (result) => {
           if (!state.orderedPrint) {
-            print(formatTargetResult(result, targets.length > 1));
+            printResult(result, targets.length);
           }
           return result;
         })
       )
     );
   } else if (state.isInputRequired) {
-    throw new Error('No input');
+    throw error`No input`;
   }
 
   if (orderedPrint) {
-    const message = formatAllResults(results);
-    if (message) print(message);
+    printAllResults(results);
   }
 
   await Promise.all(ongoing);

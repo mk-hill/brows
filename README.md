@@ -10,8 +10,9 @@
 An easy to use application for consuming text content from any website in the command line. Uses CSS selectors to retrieve content.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/mk-hill/brows/dev/readme_demo.gif" alt="brows demo" width="600" >
-  <br>
+  <a href="#examples">
+    <img src="https://raw.githubusercontent.com/mk-hill/brows/master/readme_demo.gif" alt="brows demo" width="650" >
+  </a>
   <sub>
     Shows 
     <a href="#basic-usage">basic usage</a>, 
@@ -111,7 +112,7 @@ Options can be placed anywhere.
 ```console
 $ brows info.cern.ch/hypertext/WWW/TheProject.html h1 -v
 # ...
-Found h1 in http://info.cern.ch/hypertext/WWW/TheProject.html response data
+Found h1 in response data
 World Wide Web
 ```
 
@@ -159,7 +160,7 @@ Further grouping saved targets (and groups of targets) makes this easy to do for
 
 ```console
 $ brows --save-only latestKurzgesagt 'youtube.com/user/Kurzgesagt/videos?sort=dd' '#video-title'
-$ brows --save-only availability amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090 '#availability span'
+$ brows --save-only availability https://amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090 '#availability span'
 $ brows --save-only examples weather availability latestKurzgesagt titleHtml listItems
 ```
 
@@ -180,8 +181,8 @@ availability: Temporarily out of stock.
 `--import` and `--export` use a relative or absolute path.
 
 ```console
-$ brows -i example.yml
-$ brows -e /absolute/path/to/example2.yaml
+$ brows -i /absolute/path/to/example.yaml
+$ brows -e readme_examples.yml
 ```
 
 A default file name will be used if the provided path is a directory.
@@ -295,10 +296,6 @@ Targets and groups saved in the above examples are exported as:
 
 ```yaml
 Targets:
-  amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090:
-    availability:
-      forceBrowser: true
-      selector: '#availability span'
   google.com/search?q=weather:
     precipitation:
       forceBrowser: true
@@ -306,6 +303,8 @@ Targets:
     temperature:
       forceBrowser: true
       selector: '#wob_ttm'
+  https://amazon.com/How-Absurd-Scientific-Real-World-Problems/dp/0525537090:
+    availability: '#availability span'
   info.cern.ch/hypertext/WWW/TheProject.html:
     titleHtml:
       contentType: outerHTML

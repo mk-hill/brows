@@ -1,11 +1,10 @@
 import YAML from 'yaml';
 
-import { filterProps, splitByFilter, printIfVerbose, typedEntries, formatUrl, plural, highlight, print } from '../util';
+import { filterProps, splitByFilter, typedEntries, formatUrl, plural, error } from '../util';
 
 import defaults, { matchesAllDefaults } from './defaults';
 import { NamedTarget, isGroup, Target, TargetGroup, isValidTargetEntry, isValidGroupEntry } from './types';
-
-const { stdout } = printIfVerbose;
+import { stdout, Color, stderr } from '../stdio';
 
 /**
  * Name to selector string or object of with only non-defaults
@@ -31,7 +30,7 @@ class ExportData {
 
   constructor(input: string | Array<NamedTarget | TargetGroup>, json = false) {
     if (typeof input === 'string') {
-      stdout('Parsing file contents');
+      stdout.verbose`Parsing file contents`;
       const data = json ? JSON.parse(input) : YAML.parse(input);
       this.targets = data.Targets;
       this.groups = data.Groups;
@@ -77,11 +76,12 @@ class ExportData {
 
     const [validKeys, invalidKeys] = splitByFilter(Object.keys(exportedTarget), (key) => key in validOnly);
     if (invalidKeys.length) {
-      print(`Invalid ${plural('property', invalidKeys.length)} in ${highlight(name)}: ${invalidKeys}`, 'error');
+      const property = [plural('property', invalidKeys.length), Color.RED];
+      stderr`Invalid ${property} in ${name}: ${invalidKeys}`;
       if (invalidKeys.includes('selector')) {
-        throw new Error(`Cannot import ${highlight(name)} without valid selector`);
+        throw error`Cannot import ${name} without valid selector`;
       } else {
-        print(`Only importing valid properties from ${highlight(name)}: ${validKeys}`, 'error');
+        stderr`Only importing valid properties from ${name}: ${validKeys}`;
       }
     }
 
@@ -113,7 +113,7 @@ class ExportData {
     return typedEntries(this.groups).reduce((groups, entry) => {
       const [name, members] = entry;
       if (!isValidGroupEntry(entry)) {
-        throw new Error(`Invalid group: ${highlight(name)}. Groups must consist of an array of target names`);
+        throw error`Invalid group: ${name}. Groups must consist of an array of target names`;
       }
       groups.push({ name, members });
       return groups;

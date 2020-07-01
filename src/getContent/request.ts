@@ -2,33 +2,31 @@ import axios from 'axios';
 import { JSDOM } from 'jsdom';
 
 import { Target } from '../targets';
-import { printIfVerbose, highlight } from '../util';
+import { stdout } from '../stdio';
 
-import { ElementNotFoundError } from './ElementNotFoundError';
 import { GetContentResult } from '.';
+import { ElementNotFoundError } from './ElementNotFoundError';
 
 const documents: Record<string, Promise<Document>> = {};
-
-const { stdout } = printIfVerbose;
 
 export async function getContentFromResponse(target: Readonly<Target>): Promise<GetContentResult> {
   const { name, url, selector, contentType, allMatches, delim } = target;
   const resultProps = { name, contentType, allMatches, delim };
 
-  const title = highlight(name || selector);
+  const title = name || selector;
 
   if (!documents[url]) {
-    stdout(`Requesting ${highlight(url)} content for ${title}`);
+    stdout.verbose`Making GET request for ${title}: ${url}`;
     documents[url] = axios({ url, responseType: 'text' })
       .then((res) => {
-        stdout(`Received response from ${highlight(url)}`);
+        stdout.verbose.success`Received response from: ${url}`;
         return new JSDOM(res.data).window.document;
       })
       .catch((e) => {
-        throw new Error(`Unable to retrieve HTML content: ${e.message}`);
+        throw new Error(e.message);
       });
   } else {
-    stdout(`Using existing ${highlight(url)} request for ${title}`);
+    stdout.verbose.success`Using previous request for ${title}: ${url}`;
   }
 
   const document = await documents[url];
@@ -49,10 +47,9 @@ export async function getContentFromResponse(target: Readonly<Target>): Promise<
 }
 
 function throwIfNotFound({ url, selector, name }: Target, condition: boolean) {
-  const title = highlight(name || selector);
   if (!condition) {
     throw new ElementNotFoundError(url, selector);
   } else {
-    stdout(`Found ${title} in ${name ? '' : highlight(url) + ' '}response data`);
+    stdout.verbose.success`Found ${name || selector} in response data`;
   }
 }

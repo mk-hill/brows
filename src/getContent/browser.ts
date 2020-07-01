@@ -1,15 +1,15 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { TimeoutError } from 'puppeteer/Errors';
 
+import { error } from '../util';
 import { Target } from '../targets';
-import { highlight, printIfVerbose } from '../util';
+import { stdout, Color, stderr } from '../stdio';
+
 import { ElementNotFoundError } from './ElementNotFoundError';
 import { GetContentResult } from '.';
 
 let browserPromise: Promise<Browser>;
 const pages: Record<string, Promise<Page>> = {};
-
-const { stdout } = printIfVerbose;
 
 export async function getContentFromBrowser(target: Readonly<Target>): Promise<GetContentResult> {
   const { name, url, selector, contentType, allMatches, delim } = target;
@@ -18,31 +18,35 @@ export async function getContentFromBrowser(target: Readonly<Target>): Promise<G
 
   const browser = await browserPromise;
 
-  const title = highlight(name || selector);
+  const title = name || selector;
 
   if (!pages[url]) {
-    stdout(`Opening ${highlight(url)} page in browser for ${title}`);
+    stdout.verbose`Opening browser page for ${title}: ${url}`;
     pages[url] = browser.newPage().then((page) =>
       page.goto(url).then(() => {
-        stdout(`Page navigation to ${highlight(url)} complete`);
+        stdout.verbose.success`Completed page navigation to: ${url}`;
         return page;
       })
     );
   } else {
-    stdout(`Using existing ${highlight(url)} page for ${title}`);
+    stdout.verbose.success`Using existing page for ${title}: ${url}`;
   }
 
   const page = await pages[url];
 
-  stdout(`Waiting for ${title} in browser page`);
+  stdout.verbose`Waiting for ${title} in browser page`;
+  const warning = createWarning(target);
+
   await page.waitForSelector(selector).catch((e) => {
     if (e instanceof TimeoutError) {
       throw new ElementNotFoundError(url, selector);
     }
-    throw new Error(`Unable wait for selector "${selector}": ${e.message}`);
+    throw error`Unable wait for selector ${selector}: 
+                ${e.message}`;
   });
 
-  stdout(`Found ${title} in browser page`);
+  clearTimeout(warning);
+  stdout.verbose.success`Found ${title} in browser page`;
 
   let content;
 
@@ -59,18 +63,47 @@ export async function getContentFromBrowser(target: Readonly<Target>): Promise<G
   return { name, content, contentType, allMatches, delim };
 }
 
+const warningMs = 5000;
+
+/**
+ * Only warn if verbose for saved targets
+ */
+function createWarning(target: Readonly<Target>): NodeJS.Timeout {
+  const { name, url, selector } = target;
+  let warning;
+  if (name) {
+    const command = `brows -s '${name}' '${url}' <newSelector>`;
+    warning = () => stderr.verbose`Still waiting for ${name}, page structure might have changed.
+                                   You might want to exit and correct the saved selector using:
+                                   ${[command, Color.BRIGHT]}
+                                   Continuing to wait...`;
+  } else {
+    warning = () => stderr`Still waiting for target in browser page.
+                           You might want to exit and confirm your input is correct:
+                           url: ${[url, Color.BRIGHT]}
+                           selector: ${[selector, Color.BRIGHT]}
+                           This warning will not be shown for saved targets unless using ${['--verbose', Color.BRIGHT]}.
+                           Continuing to wait...`;
+  }
+  return setTimeout(warning, warningMs);
+}
+
 export async function launchBrowser(): Promise<void> {
   if (browserPromise) return;
-  stdout('Launching browser');
+  stdout.verbose`Launching browser`;
   browserPromise = puppeteer
     .launch()
     .then((browser) => {
-      stdout('Browser launched');
+      stdout.verbose`Browser launched ${Color.GREEN}`;
       return browser;
     })
     .catch((e) => {
-      throw new Error(`Unable to launch browser: ${e.message}`);
+      throw error`Unable to launch browser: ${e.message}`;
     });
 }
 
-export const closeBrowser = async (): Promise<void> => browserPromise?.then((browser) => browser.close());
+export const closeBrowser = async (): Promise<void> => {
+  if (!browserPromise) return;
+  stdout.verbose`Closing browser`;
+  return browserPromise.then((browser) => browser.close()).then(() => stdout.verbose.success`Browser closed`);
+};

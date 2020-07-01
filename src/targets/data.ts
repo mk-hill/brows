@@ -1,17 +1,16 @@
 import { readdirSync, mkdirSync, existsSync, promises } from 'fs';
 import path from 'path';
 
-import { filterProps, printIfVerbose, highlight, confirm } from '../util';
+import { filterProps, error } from '../util';
+import { stdout, confirm, Color } from '../stdio';
 
-import defaults, { exportsFileName } from './defaults';
 import ExportData from './ExportData';
+import defaults, { exportsFileName } from './defaults';
 import { Target, NamedTarget, isGroup, TargetGroup } from './types';
 
 export const dataDir = `${path.resolve(__dirname, '../data')}`;
 
 const { readFile, writeFile, rmdir, lstat } = promises;
-
-const { stdout } = printIfVerbose;
 
 const knownTargets: Record<string, NamedTarget | undefined> = {};
 
@@ -34,31 +33,36 @@ const readRecursive = async (name: string): Promise<NamedTarget[]> => {
 
 const writeTarget = async (name: string, target: Target | Pick<TargetGroup, 'members'>) => {
   knownTargets[name] = { name, ...target } as NamedTarget;
-  await writeFile(
+  return writeFile(
     `${dataDir}/${name}.json`,
     JSON.stringify(filterProps(target, ([key, value]) => value !== defaults[key])),
     'utf8'
   );
-  stdout(`Saved ${highlight(name)}`);
 };
 
-const saveTarget = async (name: string, data: NamedTarget | NamedTarget[]): Promise<void> => {
+const saveTarget = async (name: string, data: NamedTarget | NamedTarget[], printSuccess = true): Promise<void> => {
+  let dataToSave;
+
   if ((Array.isArray(data) && data.length === 1) || !Array.isArray(data)) {
     const { url, selector, contentType, allMatches, delim, forceBrowser } = Array.isArray(data) ? data[0] : data;
-    return writeTarget(name, { url, selector, contentType, allMatches, delim, forceBrowser });
+    dataToSave = { url, selector, contentType, allMatches, delim, forceBrowser };
+  } else {
+    dataToSave = { members: [...new Set(data.map(({ name: memberName }) => memberName))] };
   }
 
-  return writeTarget(name, { members: [...new Set(data.map(({ name: memberName }) => memberName))] });
+  return writeTarget(name, dataToSave).then(() => {
+    if (printSuccess) stdout.verbose.success`Saved ${name}`;
+  });
 };
 
 export const confirmAndSave = async (name: string, target: Target[]): Promise<void> => {
-  if (!name) throw new Error('Cannot save without name');
+  if (!name) throw error`Cannot save without name`;
 
   if (getSavedNames().includes(name)) {
     try {
-      await confirm(`${highlight(name)} already exists, overwrite?`);
+      await confirm`${name} already exists, overwrite?`;
     } catch {
-      return console.log(`Aborted saving ${highlight(name)}`);
+      return stdout.sync`Aborted saving ${name} ${Color.YELLOW}`;
     }
   }
 
@@ -66,7 +70,7 @@ export const confirmAndSave = async (name: string, target: Target[]): Promise<vo
 };
 
 export const updateSavedTarget = (name: string, updates: Partial<Target>): Promise<void> =>
-  readTarget(name).then((savedTarget) => saveTarget(name, { ...savedTarget, ...updates }));
+  readTarget(name).then((savedTarget) => saveTarget(name, { ...savedTarget, ...updates }, false));
 
 export const loadSavedTargets = async (names: string[]): Promise<NamedTarget[]> => {
   const savedTargets: NamedTarget[][] = await Promise.all(names.map(readRecursive));
@@ -88,11 +92,11 @@ export const getSavedNames = (): string[] => {
 
   if (!existsSync(dataDir)) {
     mkdirSync(dataDir);
-    stdout(`Created directory ${highlight(dataDir)} for brows data`);
+    stdout.verbose`Created directory ${dataDir} for brows data`;
     return [];
   }
 
-  stdout(`Reading saved target and group names from ${highlight(dataDir)}`);
+  stdout.verbose`Reading saved target and group names from: ${[dataDir, Color.DIM]}`;
   const names = readdirSync(dataDir)
     .filter((fileName) => fileName?.endsWith('.json'))
     .map((fileName) => fileName.slice(0, -5));
@@ -110,62 +114,62 @@ const isDir = (path: string): Promise<boolean> =>
     .catch(() => false);
 
 export const exportAllSaved = async (filePath: string): Promise<void> => {
-  stdout('Loading all saved targets and groups for export');
+  stdout.verbose`Loading all saved targets and groups for export`;
   const allSaved = await Promise.all(getSavedNames().map(readTarget));
 
   if (!allSaved.length) {
-    throw new Error('No saved data to export');
+    throw error`No saved data to export`;
   }
 
-  stdout(`Exporting ${highlight(allSaved.length)} items`);
+  stdout.verbose`Exporting ${allSaved.length} items`;
   const exportsYaml = new ExportData(allSaved).toYaml();
-  stdout('Converted data to export format');
+  stdout.verbose.success`Converted data to export format`;
 
   let targetPath = path.resolve(process.cwd(), filePath);
   if (await isDir(targetPath)) targetPath = path.resolve(targetPath, exportsFileName);
 
   if (existsSync(targetPath)) {
     try {
-      await confirm(`${targetPath} already exists, overwrite?`);
+      await confirm`${targetPath} already exists. 
+                    Overwrite?`;
     } catch {
-      return console.log('Aborted export');
+      return stdout.sync`Aborted export ${Color.YELLOW}`;
     }
   }
 
-  stdout(`Saving exports to ${highlight(targetPath)}`);
+  stdout.verbose`Saving exports to: ${targetPath}`;
   await writeFile(targetPath, exportsYaml, 'utf8');
-  stdout(`${highlight(targetPath)} saved`);
+  stdout.verbose.success`Export complete`;
 };
 
 export const importAllFromFile = async (filePath: string): Promise<void> => {
   let targetPath = path.resolve(process.cwd(), filePath);
   if (await isDir(targetPath)) targetPath = path.resolve(targetPath, exportsFileName);
-  stdout(`Importing from ${highlight(targetPath)}`);
+  stdout.verbose`Importing from: ${targetPath}`;
 
   const contents = await readFile(targetPath, 'utf8');
-  stdout(`Read file contents`);
+  stdout.verbose.success`Read file contents`;
+
   const [targets, groups] = new ExportData(contents, targetPath.endsWith('.json')).toInternalData();
-  stdout(`Found ${highlight(targets.length)} targets and ${highlight(groups.length)} groups in file`);
+  stdout.verbose.success`Found ${targets.length} targets and ${groups.length} groups in file`;
 
   const existingNames = getSavedNames();
   const namesInBoth = [...targets, ...groups].map(({ name }) => name).filter((name) => existingNames.includes(name));
 
   if (namesInBoth.length) {
-    const names = namesInBoth.map(highlight).join(', ');
     try {
-      await confirm(
-        `${highlight(namesInBoth.length)} names match existing ones and would be overwritten: ${names}\nImport anyway?`
-      );
+      await confirm`${namesInBoth.length} names match existing ones and would be overwritten: ${namesInBoth}
+                    Import anyway?`;
     } catch {
-      return console.log('Aborted import');
+      return stdout.sync`Aborted import ${Color.YELLOW}`;
     }
   } else {
-    stdout(`No overlap with existing data found`);
+    stdout.verbose`No overlap with existing data found`;
   }
   const savingTargets = targets.map((target) => saveTarget(target.name, target));
   const savingGroups = groups.map(({ name, members }) => writeTarget(name, { members }));
   await Promise.all([...savingTargets, ...savingGroups]);
-  stdout('Import complete');
+  stdout.verbose.success`Import complete`;
 };
 
 export const deleteAllData = (): Promise<void> => rmdir(dataDir, { recursive: true });

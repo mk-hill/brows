@@ -2,6 +2,8 @@ import { resolve } from 'path';
 import * as defaults from '../src/defaults';
 import { exportsFileName } from '../src/targets/defaults';
 
+defaults.runOptions.acceptAllPrompts = true;
+
 export const urls = {
   unformatted: 'info.cern.ch/hypertext/WWW/TheProject.html',
   fetch: 'http://info.cern.ch/hypertext/WWW/TheProject.html',

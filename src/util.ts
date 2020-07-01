@@ -1,82 +1,11 @@
-import pretty from 'pretty';
-import readline from 'readline';
+import { TaggedVars, formatMessage, Color } from './stdio';
 
-import state from './state';
-import { GetContentResult } from './getContent';
-
-export async function confirm(message: string): Promise<void> {
-  if (state.acceptAllPrompts) return;
-
-  await state.promptSettled;
-
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  const promise: Promise<void> = new Promise((resolve, reject) => {
-    rl.question(message + ' Y/N:', (answer) => {
-      rl.close();
-      state.prompt = null;
-
-      const confirmed = ['yes', 'y'].includes(answer?.trim()?.toLowerCase());
-      return confirmed ? resolve() : reject();
-    });
-  });
-
-  state.prompt = promise;
-  return promise;
-}
-
-export const highlight = (s: Required<{ toString(): void }>): string => `\x1b[36m${s}\x1b[0m`;
+export const error = (rawStrings: TemplateStringsArray, ...variables: TaggedVars): Error =>
+  new Error(formatMessage(rawStrings, variables, Color.RED));
 
 export const formatUrl = (url: string): string => {
   return ['http://', 'https://'].some((protocol) => url.startsWith(protocol)) ? url : `http://${url}`;
 };
-
-const formatContent = (result: GetContentResult, indent = 0, isFirstElement = true): string => {
-  const { content, delim } = result;
-  if (!Array.isArray(content)) {
-    return (
-      pretty(content, { ocd: true })
-        .split('\n')
-        // indent every line except the first line of the first element's content
-        .map((line, i) => ' '.repeat(isFirstElement && !i ? 0 : indent) + line)
-        .filter((line) => line.trim())
-        .join('\n')
-    );
-  }
-
-  const indentEachResult = delim.includes('\n') ? indent : 0;
-
-  return content
-    .filter((singleElementContent) => singleElementContent.trim())
-    .map((s, i) => formatContent({ ...result, content: s }, indentEachResult, i === 0))
-    .join(delim);
-};
-
-export const formatTargetResult = (result: GetContentResult, includeName: boolean): string => {
-  const { name } = result;
-  if (!name && includeName) throw new Error('No name to include in formatted result');
-  let prefix = '';
-  let indent = 0;
-
-  if (includeName) {
-    const s = ': ';
-    prefix = highlight(name as string) + s;
-    indent = (name?.length ?? 0) + s.length;
-  }
-
-  const formattedContent = formatContent(result, indent);
-
-  return (prefix + formattedContent).trim();
-};
-
-export const formatAllResults = (results: GetContentResult[]): string =>
-  results
-    .map((result) => formatTargetResult(result, results.length > 1))
-    .join('\n')
-    .trim();
 
 /**
  * Careful, only appends 's' and handles '-y' -> '-ies' for the moment
@@ -102,6 +31,9 @@ export const filterProps = <T>(obj: T, predicate: (entry: Entry<T>) => boolean =
   return Object.fromEntries(typedEntries(obj).filter(predicate)) as Partial<T>;
 };
 
+/**
+ * @returns Array of arrays: items matching predicate followed by remaining items
+ */
 export const splitByFilter = <T>(ar: T[], predicate: (elem: T) => boolean): [T[], T[]] => {
   return ar.reduce(
     (split, elem) => {
@@ -110,18 +42,4 @@ export const splitByFilter = <T>(ar: T[], predicate: (elem: T) => boolean): [T[]
     },
     [[], []] as [T[], T[]]
   );
-};
-
-export const print = async (message: string, type: 'log' | 'error' | 'warn' = 'log'): Promise<void> => {
-  await state.promptSettled;
-  console[type](message);
-};
-
-export const printIfVerbose = {
-  stdout: async (message: string): Promise<void> => {
-    state.verbose && print(message);
-  },
-  stderr: async (message: string): Promise<void> => {
-    state.verbose && print(message, 'error');
-  },
 };

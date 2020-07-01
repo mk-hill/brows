@@ -3,7 +3,6 @@ import { resolve } from 'path';
 
 import brows from '../src';
 import { readTarget, ContentType } from '../src/targets';
-import * as util from '../src/util';
 
 import { urls, selectors, results, names, paths } from './setup';
 
@@ -13,7 +12,6 @@ beforeAll(() => {
   console.log = jest.fn();
   console.error = jest.fn();
   console.warn = jest.fn();
-  jest.spyOn(util, 'confirm').mockImplementation(async () => undefined);
 });
 
 describe('Invalid input', () => {
@@ -37,8 +35,8 @@ describe('Anonymous targets', () => {
     }));
 
   test("Doesn't launch browser unless necessary", () =>
-    brows(urls.fetch, h1, { verbose: true }).then(() =>
-      expect(console.error).not.toHaveBeenCalledWith(expect.stringContaining('using browser'))
+    brows(urls.fetch, h1, { verbose: true, suppressAllOutput: false }).then(() =>
+      expect(console.log).not.toHaveBeenCalledWith(expect.stringContaining('Using browser'))
     ));
 
   test('Retrieves text content from SPA', () =>
@@ -58,8 +56,8 @@ describe('Anonymous targets', () => {
     }));
 
   test('Automatically launches browser if necessary', () =>
-    brows(urls.spa, h1, { verbose: true }).then(() =>
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('using browser'))
+    brows(urls.spa, h1, { verbose: true, suppressAllOutput: false }).then(() =>
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Using browser'))
     ));
 
   test('Retrieves content from unformatted URL', () =>
@@ -81,7 +79,7 @@ describe('Named targets', () => {
   });
 
   test('Warns if input includes both saved names and unknown strings', () => {
-    brows(names.fetchText, names.fetchHtml, 'nonsense', 'moreNonsense').then(() =>
+    brows(names.fetchText, names.fetchHtml, 'nonsense', 'moreNonsense', { suppressAllOutput: false }).then(() =>
       expect(console.error).toHaveBeenCalledWith(
         expect.stringMatching('Use either one URL followed by one CSS selector or only saved target names')
       )
@@ -150,7 +148,7 @@ describe('Named targets', () => {
     }));
 
   test('Skips fetch attempt when using updated target', () =>
-    brows(names.spaText, { verbose: true }).then(() =>
+    brows(names.spaText, { verbose: true, suppressAllOutput: false }).then(() =>
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Skipping request attempt'))
     ));
 

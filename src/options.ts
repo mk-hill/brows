@@ -1,5 +1,6 @@
 import * as defaults from './defaults';
 import { Input } from '.';
+import { error } from './util';
 
 /**
  * Options saved as part of each target
@@ -23,6 +24,7 @@ export interface RunOptions {
   orderedPrint: boolean;
   acceptAllPrompts: boolean;
   verbose: boolean;
+  suppressAllOutput: boolean;
 }
 
 export interface Options extends TargetOptions, RunOptions {}
@@ -38,7 +40,7 @@ const splitOptions = (options: Options) =>
       } else if (isRunOption(key)) {
         ar[1][key] = value;
       } else {
-        throw new Error(`Invalid option: ${key}`);
+        throw error`Invalid option: ${key}`;
       }
       return ar;
     },
@@ -54,7 +56,7 @@ export function extractOptions(args: Input): [string[], TargetOptions, RunOption
   const input = [...args];
   let options = {};
   if (isOptions(input[input.length - 1])) options = input.pop() as Partial<Options>;
-  if (!isValidInput(input)) throw new Error('Invalid arguments');
+  if (!isValidInput(input)) throw error`Invalid arguments`;
 
   return [input, ...splitOptions({ ...defaults.options, ...options })];
 }

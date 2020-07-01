@@ -1,6 +1,7 @@
 import { RunOptions } from './options';
+import { runOptions } from './defaults';
 
-let options: RunOptions;
+let options: RunOptions = runOptions;
 
 export const init = (runOptions: RunOptions): RunOptions => {
   options = runOptions;
@@ -40,5 +41,9 @@ export default {
 
   get promptResolved(): Promise<void> | null {
     return ongoingPrompt;
+  },
+
+  get suppressAllOutput(): boolean {
+    return options.suppressAllOutput;
   },
 };
