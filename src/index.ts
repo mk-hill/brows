@@ -13,9 +13,8 @@ export type Result = Record<string, string | string[]>;
 
 /**
  * Retrieve content from target(s)
- * @param input Any number of strings optionally followed by an options object.
+ * @param args Any number of strings optionally followed by an options object.
  * Strings can consist of either one url followed by one selector, or any number of saved target names.
- * @param options Optional options object.
  * @returns Promise which resolves to an object with each individual target's name (or 'content' for anonymous targets)
  * mapped to its result. Group names will not be included in the result.
  */

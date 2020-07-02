@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import state from '../state';
 
-import { TaggedVars, Color, Stdout, Stderr } from './types';
-import { formatMessage, formatRed, withDefaultColor, formatResult, formatAllResults } from './format';
+import { TaggedVars, Color, Stdout, Stderr, TemplateFn, isColor } from './types';
+import { formatMessage, formatResult, formatAllResults } from './format';
 import { GetContentResult } from '../getContent';
 
 /**
@@ -24,7 +24,16 @@ function onlyIfVerbose(this: any, rawStrings: TemplateStringsArray, ...variables
   if (state.verbose) return this(rawStrings, ...variables);
 }
 
+function withDefaultColor<T>(fn: TemplateFn<T>, defaultColor: Color): TemplateFn<T> {
+  return function (rawStrings: TemplateStringsArray, ...vars: TaggedVars) {
+    const varsWithColor = isColor(vars[vars.length - 1]) ? vars : [...vars, defaultColor];
+    return fn(rawStrings, ...varsWithColor);
+  };
+}
+
 function createPrintFunctions(): { stdout: Stdout; stderr: Stderr } {
+  const formatRed = withDefaultColor(formatMessage, Color.RED);
+
   const stdoutRawSync = createSyncFn();
 
   const stdoutRaw = createAsyncFn();

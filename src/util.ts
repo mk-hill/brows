@@ -1,7 +1,7 @@
 import { TaggedVars, formatMessage, Color } from './stdio';
 
 export const error = (rawStrings: TemplateStringsArray, ...variables: TaggedVars): Error =>
-  new Error(formatMessage(rawStrings, variables, Color.RED));
+  new Error(formatMessage(rawStrings, ...variables, Color.RED));
 
 export const formatUrl = (url: string): string => {
   return ['http://', 'https://'].some((protocol) => url.startsWith(protocol)) ? url : `http://${url}`;

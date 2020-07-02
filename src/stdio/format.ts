@@ -3,7 +3,7 @@ import pretty from 'pretty';
 import { GetContentResult } from '../getContent';
 import state from '../state';
 
-import { Color, isColor, Coercible, TaggedVars, TemplateFn } from './types';
+import { Color, isColor, Coercible, TaggedVars } from './types';
 import { error } from '../util';
 
 const prefix = '\x1b[';
@@ -60,15 +60,6 @@ export function formatMessage(rawStrings: TemplateStringsArray, ...variables: Ta
 
   return unindentLines(combined).trim();
 }
-
-export function withDefaultColor<T>(fn: TemplateFn<T>, defaultColor: Color): TemplateFn<T> {
-  return function (rawStrings: TemplateStringsArray, ...vars: TaggedVars) {
-    const varsWithColor = isColor(vars[vars.length - 1]) ? vars : [...vars, defaultColor];
-    return fn(rawStrings, ...varsWithColor);
-  };
-}
-
-export const formatRed = withDefaultColor(formatMessage, Color.RED);
 
 const formatResultContent = (result: GetContentResult, indent = 0, isFirstElement = true): string => {
   const { content, delim } = result;

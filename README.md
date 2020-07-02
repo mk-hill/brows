@@ -18,8 +18,9 @@ An easy to use application for consuming text content from any website in the co
     Shows 
     <a href="#basic-usage">basic usage</a>, 
     <a href="#importing-and-exporting">importing</a>, and 
-    <a href="#saving-groups">groups</a>.
+    <a href="#saving-groups">groups</a>
   </sub>
+  <br>
 </p>
 
 ## Contents

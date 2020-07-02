@@ -1,5 +1,4 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { TimeoutError } from 'puppeteer/Errors';
 
 import { error } from '../util';
 import { Target } from '../targets';
@@ -7,6 +6,8 @@ import { stdout, Color, stderr } from '../stdio';
 
 import { ElementNotFoundError } from './ElementNotFoundError';
 import { GetContentResult } from '.';
+
+const { TimeoutError } = puppeteer.errors;
 
 let browserPromise: Promise<Browser>;
 const pages: Record<string, Promise<Page>> = {};
@@ -69,7 +70,7 @@ const warningMs = 5000;
  * Only warn if verbose for saved targets
  */
 function createWarning(target: Readonly<Target>): NodeJS.Timeout {
-  const { name, url, selector } = target;
+  const { name, url } = target;
   let warning;
   if (name) {
     const command = `brows -s '${name}' '${url}' <newSelector>`;
@@ -79,9 +80,7 @@ function createWarning(target: Readonly<Target>): NodeJS.Timeout {
                                    Continuing to wait...`;
   } else {
     warning = () => stderr`Still waiting for target in browser page.
-                           You might want to exit and confirm your input is correct:
-                           url: ${[url, Color.BRIGHT]}
-                           selector: ${[selector, Color.BRIGHT]}
+                           You might want to exit and confirm the url and selector are correct.
                            This warning will not be shown for saved targets unless using ${['--verbose', Color.BRIGHT]}.
                            Continuing to wait...`;
   }
@@ -94,7 +93,7 @@ export async function launchBrowser(): Promise<void> {
   browserPromise = puppeteer
     .launch()
     .then((browser) => {
-      stdout.verbose`Browser launched ${Color.GREEN}`;
+      stdout.verbose.success`Browser launched`;
       return browser;
     })
     .catch((e) => {
