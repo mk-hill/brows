@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/brows.svg?style=flat-square)](https://www.npmjs.org/package/brows)
 [![build status](https://img.shields.io/travis/mk-hill/brows/master.svg?style=flat-square)](https://travis-ci.org/mk-hill/brows)
 [![dependencies](https://img.shields.io/librariesio/release/npm/brows.svg?style=flat-square)](https://libraries.io/npm/brows)
-[![downloads](https://img.shields.io/npm/dm/brows.svg?style=flat-square)](https://npm-stat.com/charts.html?package=brows)
+[![downloads](https://img.shields.io/npm/dt/brows.svg?style=flat-square)](https://npm-stat.com/charts.html?package=brows)
 [![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://github.com/mk-hill/brows/blob/master/LICENSE)
 [![language](https://img.shields.io/github/languages/top/mk-hill/brows.svg?style=flat-square)](https://github.com/mk-hill/brows/search?l=typescript)
 
