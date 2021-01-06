@@ -27,7 +27,7 @@
     "prepublishOnly": "npm test && npm run lint"
   },
   "dependencies": {
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "jsdom": "^16.4.0",
     "meow": "^7.1.1",
     "pretty": "^2.0.0",
